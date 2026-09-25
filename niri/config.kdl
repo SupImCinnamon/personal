@@ -1,0 +1,86 @@
+include "animations/animations.kdl"
+include "layer-rules/layer-rules.kdl"
+include "startup/startup.kdl"
+include "environment/environment.kdl"
+include "window-rules/window-rules.kdl"
+include "binds/binds.kdl"
+
+output "DP-3" {
+    mode "1920x1080"
+    position x=0 y=0
+    focus-at-startup
+}
+
+output "HDMI-A-1" {
+    mode "1920x1080"
+    position x=-1920 y=0
+}
+
+gestures {
+    hot-corners {
+        off
+    }
+}
+
+input {
+    keyboard {
+        xkb {
+            layout "be"
+        }
+
+        repeat-delay 175
+        repeat-rate 30
+        track-layout "global"
+        // numlock
+    }
+
+    mouse {
+        accel-speed 0.0
+        accel-profile "flat"
+        scroll-button 273
+    }
+
+    disable-power-key-handling
+    warp-mouse-to-focus
+    focus-follows-mouse max-scroll-amount="0%"
+
+}
+
+layout {
+    gaps 16
+    background-color "transparent"
+//    empty-workspace-above-first
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        width 2
+        active-color   "#fbfdfb"      // Medium gray
+        inactive-color "#030607"      // Dark gray
+    }
+
+    struts {
+        bottom -4
+        top -4
+    }
+}
+
+overview {
+    workspace-shadow {
+        off
+    }
+    zoom 0.25
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+prefer-no-csd
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"

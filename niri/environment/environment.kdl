@@ -1,0 +1,14 @@
+environment {
+    XDG_CURRENT_DESKTOP "niri"
+    QT_QPA_PLATFORM "wayland"
+    QT_QPA_PLATFORMTHEME "qt6ct"
+    QT_QPA_PLATFORMTHEME_QT6 "qt6ct"
+
+    _JAVA_AWT_WM_NONREPARENTING "1"
+
+    GBM_BACKEND "nvidia-drm"
+    LIBVA_DRIVER_NAME "nvidia"
+    VDPAU_DRIVER "nvidia"
+    __GLX_VENDOR_LIBRARY_NAME "nvidia"
+    TERMINAL "foot"
+}

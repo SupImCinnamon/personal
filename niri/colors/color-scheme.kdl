@@ -1,0 +1,6 @@
+overview {
+    workspace-shadow {
+        off
+    }
+    zoom 0.25
+}
