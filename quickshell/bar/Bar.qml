@@ -16,6 +16,7 @@ Scope {
     model: Quickshell.screens
 
     PanelWindow {
+      id: barWindow
       required property var modelData
       screen: modelData
 
@@ -37,7 +38,9 @@ Scope {
             id: leftRow
             anchors.left: Qt.AlignLeft
             spacing: 10 // Spacing between items
-            ActiveWorkspace {}
+            ActiveWorkspace {
+              screen: barWindow.screen
+            }
             ActiveWindow {}
           }
 
