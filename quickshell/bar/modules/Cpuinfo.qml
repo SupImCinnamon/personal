@@ -12,7 +12,8 @@ RowLayout {
         text: Cpuinfoproc.fanrpm + " RPM"
         font.family: root.font
         font.pixelSize: root.fontSize
-        color: "#cbc9c5"
+        color: root.textColor
+        
     }
 
     Text {
@@ -20,13 +21,14 @@ RowLayout {
         text: "󰈐"
         font.family: root.font
         font.pixelSize: 18
-        color: "#cbc9c5"
+        color: root.textColor
         verticalAlignment: Text.AlignVCenter
         Layout.fillHeight: true
         transform: Rotation {
             id: rotationTransform
-            origin.x: fanIcon.width / 2 - 0.3
-            origin.y: fanIcon.height / 2 - 0.3
+            // Magic numbers :/
+            origin.x: 9
+            origin.y: 13.6
             angle: 0
         }
         

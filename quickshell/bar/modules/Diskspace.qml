@@ -8,11 +8,21 @@ RowLayout {
     spacing: 5
     
     Text {
-        text: "󰋊 " + Diskspaceproc.space
+        text: ""
+
+        font.family: root.font 
+        font.pixelSize: 15
+        color: root.textColor
+        verticalAlignment: Text.AlignVCenter
+        Layout.fillHeight: true
+    }
+
+    Text {
+        text: Diskspaceproc.space
 
         font.family: root.font 
         font.pixelSize: root.fontSize
-        color: "#cbc9c5"
+        color: root.textColor
         verticalAlignment: Text.AlignVCenter
         Layout.fillHeight: true
     }

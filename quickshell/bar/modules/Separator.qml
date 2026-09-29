@@ -8,9 +8,7 @@ Text {
   verticalAlignment: Text.AlignVCenter
   Layout.fillHeight: true
   opacity: 0.75
-  font.family: "SauceCodePro NF" 
-  font.pixelSize: 15
-  color: "#cbc9c5"
-        
-
+  font.family: root.font 
+  font.pixelSize: root.fontSize
+  color: root.textColorSecondary
 }

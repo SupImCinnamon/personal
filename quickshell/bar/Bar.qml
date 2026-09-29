@@ -1,17 +1,13 @@
 import Quickshell
 import Quickshell.Io
+import Quickshell.Widgets
+import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 import "./modules"
 import "../widgets"
 
 Scope {
-  id: root
-  property string time 
-  property string font: "SauceCodePro NF"
-  property int fontSize: 15
-  property color textColor: "#cbc9c5"
-
   Variants {
     model: Quickshell.screens
 
@@ -20,53 +16,74 @@ Scope {
       required property var modelData
       screen: modelData
 
-      color: "#0c1114"
+      color: "transparent"
 
       anchors {
-        top: true
-        left: true
-        right: true
+          top: true
+          left: false
+          right: false
       }
 
-      implicitHeight: 25
+      width: 1800
+      implicitHeight: 28
+      BackgroundEffect.blurRegion: Region { 
+        item: content
+        bottomLeftRadius: 12
+        bottomRightRadius: 12
+        topLeftRadius: 0
+        topRightRadius: 0 
+      }
 
-      RowLayout {
+      Rectangle {
+        id: content
         anchors.fill: parent
+        color: "#66000000"
 
-          // Left Modules
+        bottomLeftRadius: 12
+        bottomRightRadius: 12
+        topLeftRadius: 0
+        topRightRadius: 0
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.rightMargin: 10
+          anchors.leftMargin: 10
+
           RowLayout {
             id: leftRow
-            anchors.left: Qt.AlignLeft
-            spacing: 10 // Spacing between items
-            ActiveWorkspace {
-              screen: barWindow.screen
-            }
+            anchors.left: parent.left
+            spacing: 7.5
+
+            ActiveWorkspace { screen: barWindow.screen }
+            Separator {}
             ActiveWindow {}
           }
 
-          // Center Modules
           RowLayout {
               id: centerRow
               anchors.horizontalCenter: parent.horizontalCenter
-              spacing: 10
-              
+              spacing: 7.5
+
+              Date {}
+              Separator {}
+              Weather {}
           }
 
-          // Right Modules
           RowLayout {
               id: rightRow
               anchors.right: parent.right
-              spacing: 7.5
+              spacing: 6
 	      
-              Separator {}
               Diskspace {}
+              Separator {}
+              Memory {}
               Separator {}
               Cpuinfo {}
               Separator {}
-              Weather {}
-              Separator {}
-              Date {}
+              Volume {}
+              Brightness {}
           }
+        }
       }
     }
   }

@@ -6,15 +6,15 @@ import QtQuick
 
 Singleton {
     id: root
-    property string weather
+    property var weather: []
 
     Process {
         id: weatherProc
-        command: ["sh", "-c", "curl wttr.in/brussels?format=\"%t\" | cut -c 2-"]
+        command: ["sh", "-c", "curl wttr.is/brussels?format=\"%t;%C\" | cut -c 2-"]
         running: true
 
         stdout: StdioCollector {
-            onStreamFinished: root.weather = this.text.trim()
+            onStreamFinished: root.weather = this.text.trim().split(";")
         }
     }
 

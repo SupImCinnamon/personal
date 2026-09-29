@@ -10,7 +10,7 @@ Singleton {
 
   Process {
     id: dateProc
-    command: ["date", "+%A, %d %B  %H:%M"]
+    command: ["date", "+%A, %d %B %H:%M"]
     running: true
 
     stdout: StdioCollector {

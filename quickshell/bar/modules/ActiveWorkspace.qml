@@ -1,12 +1,13 @@
 import Quickshell
 import Quickshell.WindowManager
+import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 
 RowLayout {
-  property color activeColor: "#cbc9c5"
+  property color activeColor: root.textColor
   property color inactiveColor: "gray"
-  property color activeBackground: "#5c696f"
+  property color activeBackground: "#806491CB"
   property color inactiveBackground: "transparent"
 
   property var screen: null
@@ -33,13 +34,13 @@ RowLayout {
   Repeater {
     model: sortedWorkspaces
 
-    Rectangle {
+    ClippingRectangle {
       required property var modelData
 
       width: workspaceText.width + 10
-      height: 25
+      height: 18
       color: modelData.active ? activeBackground : inactiveBackground
-      radius: 0
+      radius: 20
 
       Text {
         id: workspaceText
@@ -53,8 +54,9 @@ RowLayout {
         verticalAlignment: Text.AlignVCenter
         color: modelData.active ? activeColor : inactiveColor
         font.family: root.font
-        font.pixelSize: 12
+        font.pixelSize: 13
         font.bold: modelData.active
+        Layout.fillHeight: true
       }
 
       MouseArea {

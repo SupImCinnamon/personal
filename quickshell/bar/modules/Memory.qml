@@ -5,25 +5,25 @@ import QtQuick.Layouts
 import "./procs"
 
 RowLayout {
-    spacing: 7.5
+    spacing: 5
+    
     Text {
-        text: "󰃶"
-        font.family: root.font
-        font.pixelSize: root.iconSize
+        text: ""
+
+        font.family: root.font 
+        font.pixelSize: 15
         color: root.textColor
         verticalAlignment: Text.AlignVCenter
         Layout.fillHeight: true
     }
-
     Text {
-        text: Dateproc.date
-        font.family: root.font
+        text: Memoryproc.mem
+
+        font.family: root.font 
         font.pixelSize: root.fontSize
         color: root.textColor
         verticalAlignment: Text.AlignVCenter
         Layout.fillHeight: true
     }
-
-    
 }
 

@@ -5,14 +5,29 @@ import QtQuick.Layouts
 import "./procs"
 
 RowLayout {
-    spacing: 5
+    spacing: 7.5
     
     Text {
-        text: "󰏈  " + Weatherproc.weather
-
+        text: {
+            if(Weatherproc.weather[1] == "Overcast") {
+                "󰖐"
+            } else {
+                "󰖗"
+            }
+        }
+        font.family: root.font
+        font.pixelSize: root.iconSize
+        color: "#FFFFFF"
+        verticalAlignment: Text.AlignVCenter
+        Layout.fillHeight: true
+    }
+    Text {
+        text: Weatherproc.weather[0]
         font.family: root.font
         font.pixelSize: root.fontSize
-        color: "#cbc9c5"
+        color: "#FFFFFF"
+        verticalAlignment: Text.AlignVCenter
+        Layout.fillHeight: true
     }
 }
 

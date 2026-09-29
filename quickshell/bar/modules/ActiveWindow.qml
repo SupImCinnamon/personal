@@ -9,11 +9,13 @@ RowLayout {
   property string windowTitle: emptyText
     
   Text {
-    text: windowTitle.length > maxLength ? windowTitle.substring(0, maxLength) + "..." : windowTitle
-    leftPadding: 5
+    text: windowTitle.length > maxLength ? windowTitle.substring(0, maxLength).trim() + "..." : windowTitle
+    leftPadding: 2
     font.family: root.font
-    font.pixelSize: 14
+    font.pixelSize: root.fontSize
     color: root.textColor
+    verticalAlignment: Text.AlignVCenter
+    Layout.fillHeight: true
   }
   
   // Get initial window title
