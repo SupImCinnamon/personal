@@ -24,7 +24,7 @@ ColumnLayout {
 		Label {
 			text: {
 				const app = node.properties["application.name"] ?? (node.description != "" ? node.description : node.name);
-				const media = node.properties["media.name"].length > maxLength ? node.properties["media.name"].substring(0, maxLength).trim() + "..." : node.properties["media.name"];
+				const media = node.properties["media.name"] //.length > maxLength ? node.properties["media.name"].substring(0, maxLength).trim() + "..." : node.properties["media.name"];
 				return media != undefined ? `${app} - ${media}` : app;
 			}
 		}

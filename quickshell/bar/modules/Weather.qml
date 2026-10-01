@@ -18,16 +18,12 @@ RowLayout {
         font.family: root.font
         font.pixelSize: root.iconSize
         color: "#FFFFFF"
-        verticalAlignment: Text.AlignVCenter
-        Layout.fillHeight: true
     }
     Text {
         text: Weatherproc.weather[0]
         font.family: root.font
         font.pixelSize: root.fontSize
         color: "#FFFFFF"
-        verticalAlignment: Text.AlignVCenter
-        Layout.fillHeight: true
     }
 }
 

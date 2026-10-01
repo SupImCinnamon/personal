@@ -19,7 +19,7 @@ Singleton {
     }
 
     Timer {
-        interval: 3600
+        interval: 3600000
         running: true
         repeat: true
         onTriggered: weatherProc.running = true

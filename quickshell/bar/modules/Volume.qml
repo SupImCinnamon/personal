@@ -9,7 +9,7 @@ import Quickshell.Services.Pipewire
 import "../../components"
 
 RowLayout {
-    spacing: 7.5
+    spacing: 5
     property var defaultAudioSink: Pipewire.defaultAudioSink
     property real volume: defaultAudioSink?.audio?.volume ?? 0.0
     property real volumeRounded: Math.round((defaultAudioSink?.audio?.volume * 100))
@@ -33,7 +33,7 @@ RowLayout {
             }
         }
         font.family: root.font
-        font.pixelSize: root.iconSize
+        font.pixelSize: root.iconSize - 2
         color: root.textColor
         verticalAlignment: Text.AlignVCenter
         Layout.fillHeight: true
@@ -86,8 +86,8 @@ RowLayout {
         anchor.window: barWindow
         anchor.rect.x: (parentWindow.width / 2 - width / 2) + 700
         anchor.rect.y: parentWindow.height + 9
-        width: 500
-        height: 250
+        implicitWidth: 500
+        implicitHeight: 250
         color: "transparent"
         BackgroundEffect.blurRegion: Region { 
             item: content

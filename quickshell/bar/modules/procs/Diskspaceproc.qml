@@ -19,7 +19,7 @@ Singleton {
     }
 
     Timer {
-        interval: 7200
+        interval: 7200000
         running: true
         repeat: true
         onTriggered: diskSpaceProc.running = true

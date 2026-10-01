@@ -25,8 +25,8 @@ PanelWindow {
         right: 10
     }
 
-    width: 250
-    height: 100
+    implicitWidth: 250
+    implicitHeight: 100
     color: "transparent"
     BackgroundEffect.blurRegion: Region { 
         item: content
