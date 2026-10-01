@@ -1,6 +1,7 @@
 import Quickshell
 import QtQuick
 import Quickshell.Services.Notifications
+import Quickshell.Services.Mpris
 import qs.bar
 
 ShellRoot {
@@ -15,18 +16,33 @@ ShellRoot {
   property color textColorSecondary: "#aaaaaa"
   property color pillColor: "#000000"
 
-  DynamicIsland {}
+  readonly property MprisPlayer activePlayer: Mpris.players.values[0] ?? null  
+  readonly property bool playerAvailable: activePlayer !== null
 
-      NotificationServer {
-        imageSupported: true
-        bodyImagesSupported: true
-        onNotification: n => {
-            n.tracked = true
-            Island.showNotification(n)
-        }
-    }
+  DynamicIsland {}
+  
+  NotificationServer {
+      imageSupported: true
+      bodyImagesSupported: true
+      onNotification: n => {
+          n.tracked = true
+          console.log();
+          Island.showNotification(n)
+      }
+  }
+  onPlayerAvailableChanged: {
+      if (playerAvailable) {
+          Island.media = activePlayer;
+      } else {
+          Island.media = null;
+      }
+  }
 
   function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max)
+      return Math.min(Math.max(value, min), max)
   }
+
+  function capitalizeFirstLetter(val) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
 }
