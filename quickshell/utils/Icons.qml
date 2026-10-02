@@ -3,4 +3,14 @@ import Quickshell
 
 Singleton {
     property string bell: "\ue059"
-}
+    property string volumeFull: "\ue1ab"
+    property string volumeLow: "\ue1aa"
+    property string volumeOff: "\ue626"
+    property string volumeMute: "\ue1ac"
+    property string play: "\ue13c"
+    property string pause: "\ue12e"
+    property string previous: "\ue147"
+    property string next: "\ue0bd"
+    property string lyrics: "\ue349"
+    property string lyricsBack: "\ue4de"
+}   
