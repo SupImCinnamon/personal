@@ -56,8 +56,18 @@ Scope {
             }
         }
     }
+    
+    Process {
+        id: ytDlProc
+        running: false
 
-    // MPRIS doesn't push position continuously, so poll it while playing
+        onExited: (exitCode, exitStatus) => {
+            Island.dragDrop = null;
+            Island.dragDropType = null;
+            Island.dragDropContent = null;
+        }
+    }
+
     Timer {
         interval: 1000
         repeat: true
@@ -68,8 +78,8 @@ Scope {
     ColorQuantizer {
         id: quant
         source: Island.media ? Island.media.trackArtUrl : ""
-        depth: 8            // 2^3 = 8 palette colors
-        rescaleSize: 64     // downscale first, much faster
+        depth: 8
+        rescaleSize: 64
     }
 
     readonly property color accent: {
@@ -106,6 +116,32 @@ Scope {
                 item: pill
                 regions: [ Region { item: bubble } ]
             }
+
+            DropArea {
+                anchors.fill: parent
+
+                onEntered: (drag) => {
+                    drag.accept(Qt.CopyAction);
+                    Island.dragDrop = "drag";
+
+                    if (String(drag.text).includes("www.youtube.com")) {
+                        Island.dragDropType = "youtubeVideo";
+                    }
+                }
+
+                onExited: {
+                    Island.dragDrop = null
+                    Island.dragDropType = null
+                }
+
+                onDropped: (drop) => {
+                    drop.accept(Qt.CopyAction);
+                    if (String(drop.text).includes("www.youtube.com") && !ytDlProc.running) {
+                        ytDlProc.command = ["sh", "-c", Island.youtubeToYtdl(String(drop.text))]
+                        ytDlProc.running = true;
+                    }
+                }
+            }
             Rectangle {
                 id: pill
                 x: (parent.width - width) / 2
@@ -121,6 +157,9 @@ Scope {
                     case "notification:expanded":   return notifExpanded
                     case "media:compact":    return mediaCompact
                     case "media:expanded":   return mediaExpanded
+                    case "dragDrop:compact":   return dragDropCompact
+                    case "dragDrop:expanded":   return dragDropExpanded
+
                     default:
                         console.warn("viewFor: no view for", activity, kind)
                         return null
@@ -756,6 +795,61 @@ Scope {
                             }
                         }
                                 */
+                    }
+                }
+
+                Component {
+                    id: dragDropCompact
+                    Item {
+                        anchors.fill: parent
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            spacing: 10
+                            Text {
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                text: {
+                                    console.log(Island.dragDropType)
+                                    if(Island.dragDropType == "youtubeVideo") {
+                                        if(ytDlProc.running) {
+                                            Icons.cog
+                                            return;
+                                        }
+                                        Icons.youtubeDownload
+                                    } else {
+                                        ""
+                                    }
+                                }
+                                color: "white"; font.bold: true
+                                font.family: root.iconFont
+                            }
+                            Text {
+                                anchors.fill: parent
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                text: {
+                                    if(Island.dragDropType == "youtubeVideo") {
+                                        if(ytDlProc.running) {
+                                            "Downloading..."
+                                        } else {
+                                            "Drop to download"
+                                        }
+
+                                    }
+                                }
+                                color: "white";
+                                font.bold: true
+                                font.family: root.font
+                            }
+                        }
+                    }
+                }
+
+                Component {
+                    id: dragDropExpanded
+                    Text{
+                        
                     }
                 }
             }

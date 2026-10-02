@@ -13,4 +13,7 @@ Singleton {
     property string next: "\ue0bd"
     property string lyrics: "\ue349"
     property string lyricsBack: "\ue4de"
+    property string youtubeDownload: "\ue5ec"
+    property string check: "\ue226"
+    property string cog: "\ue154"
 }   

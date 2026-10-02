@@ -12,16 +12,21 @@ Singleton {
     property var notification: null
     property var media: null
     property var recording: null
+    property var dragDrop: null
+    property var dragDropType: null
+    property var dragDropContent: null
 
     property string pinned: ""
 
     readonly property string activity:
+        dragDrop ? "dragDrop" :
         notification ? "notification" :
         media ? "media" :
         "idle"
 
     readonly property var activities: {
         const out = []
+        if (dragDrop)     out.push("dragDrop")
         if (notification) out.push("notification")      // interrupts everything
         if (media)        out.push("media")      // outranks recording
         if (recording)    out.push("recording")
@@ -36,9 +41,10 @@ Singleton {
     readonly property string secondary: activities.slice(1).find(a => bubbleCapable.includes(a)) ?? ""
 
     readonly property var layouts: ({
-        idle:         { compact: Qt.size(110, 30), expanded: Qt.size(420, 120) },
+        notification: { compact: Qt.size(200, 30), expanded: Qt.size(420, 150) },
+        dragDrop:     { compact: Qt.size(230, 30), expanded: Qt.size(420, 185) },
         media:        { compact: Qt.size(150, 30), expanded: Qt.size(420, 185) },
-        notification: { compact: Qt.size(200, 30), expanded: Qt.size(420, 150) }
+        idle:         { compact: Qt.size(110, 30), expanded: Qt.size(420, 120) }
     })
 
     readonly property size currentSize: {
@@ -62,6 +68,36 @@ Singleton {
         notification = null
         expanded = false
     }
+
+
+    function youtubeToYtdl(url) {
+        const parsed = new URL(url);
+
+        let videoId;
+
+        if (parsed.hostname === "youtu.be") {
+            videoId = parsed.pathname.slice(1);
+        } else if (
+            parsed.hostname === "youtube.com" ||
+            parsed.hostname === "www.youtube.com" ||
+            parsed.hostname.endsWith(".youtube.com")
+        ) {
+            videoId = parsed.searchParams.get("v");
+
+            // Handle /shorts/ID and /embed/ID
+            if (!videoId) {
+                const match = parsed.pathname.match(/^\/(?:shorts|embed)\/([^/?]+)/);
+                videoId = match?.[1];
+            }
+        }
+
+        if (!videoId) {
+            return("invUrl");
+        }
+
+        return `yt-dlp -f "bv*+ba/b" --merge-output-format mp4 -P "~/Videos/YTDLP" "https://www.youtube.com/watch?v=${videoId}"`;
+    }
+
     onPrimaryChanged: console.log("primary:", primary, JSON.stringify(activities))
     Timer {
         interval: 3250
