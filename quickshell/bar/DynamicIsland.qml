@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 import qs.utils
 
@@ -33,6 +34,10 @@ Scope {
         "ascii_max_range = 1000",
         "bar_delimiter = 59",
     ].join("\\n");
+
+    PwObjectTracker {
+        objects: [Pipewire.defaultAudioSink]
+    }
 
     Process {
         id: cavaProc
@@ -468,10 +473,8 @@ Scope {
                                             font.pixelSize: root.fontSize
                                         }
                                         Text {
-                                            width: parent.width
+                                            Layout.fillWidth: true
                                             elide: Text.ElideRight
-                                            maximumLineCount: 3
-                                            wrapMode: Text.Wrap
                                             text: Island.media ? (Island.media.trackArtist || "") : ""
                                             color: root.textColorSecondary
                                             font.family: root.font
@@ -1031,15 +1034,15 @@ Scope {
                                 Column {
                                     spacing: 15
                                     Rectangle {
-                                        width: (controlCenterFrame.width / 2) + 57
+                                        width: 350
                                         height: 250
                                         radius: 16
                                         color: root.backgroundColor
                                     }
                                     Row {
-                                        spacing: 19
+                                        spacing: 17
                                         Rectangle {
-                                            width: (controlCenterFrame.width / 8)
+                                            width: 75
                                             height: 75
                                             radius: 16
                                             color: root.notifMuted ? root.textColorSecondary : root.backgroundColor
@@ -1061,7 +1064,7 @@ Scope {
                                             }
                                         }
                                         Rectangle {
-                                            width: (controlCenterFrame.width / 8) 
+                                            width: 75
                                             height: 75
                                             radius: 16
                                             color: root.backgroundColor
@@ -1076,7 +1079,7 @@ Scope {
                                             }
                                         }
                                         Rectangle {
-                                            width: (controlCenterFrame.width / 8) 
+                                            width: 75
                                             height: 75
                                             radius: 16
                                             color: root.nightLight ? root.textColorSecondary : root.backgroundColor
@@ -1107,7 +1110,7 @@ Scope {
                                             }
                                         }
                                         Rectangle {
-                                            width: (controlCenterFrame.width / 8) 
+                                            width: 75
                                             height: 75
                                             radius: 16
                                             color: root.backgroundColor
@@ -1124,7 +1127,7 @@ Scope {
                                     }
                                 }
                                 Rectangle {
-                                    width: (controlCenterFrame.width / 8) + 30
+                                    width: 100
                                     height: 340
                                     radius: 16
                                     color: root.backgroundColor
@@ -1153,17 +1156,29 @@ Scope {
                                                 color: Qt.darker(root.backgroundColor, 1.3)
                                                 Rectangle {
                                                     width: parent.width
-                                                    height: parent.height * 0.66 // Dynamic fill calculated from percentage
-                                                    anchors.bottom: parent.bottom // Anchored to bottom so it fills upward
+                                                    height: parent.height * root.brightness
+                                                    anchors.bottom: parent.bottom
                                                     bottomLeftRadius: 16
                                                     bottomRightRadius: 16   
                                                     color: root.textColor
+                                                }
+                                                MouseArea {
+                                                    id: brightnessSliderArea
+                                                    anchors.fill: parent
+                                                    enabled: Island.controlCenterExpanded
+
+                                                    function seek(mouseY) {
+                                                        const ratio = Math.max(0, Math.min(1, 1 - (mouseY / height)));
+                                                        root.brightness = ratio;
+                                                    }
+                                                    onPressed: mouse => seek(mouse.y)
+                                                    onPositionChanged: mouse => { if (pressed) seek(mouse.y) }
                                                 }
                                             }
                                         }
                                         Text {
                                             anchors.horizontalCenter: parent.horizontalCenter
-                                            text: "68%"
+                                            text: Math.round(root.brightness * 100) + "%"
                                             color: root.textColor
                                             font {
                                                 family: root.font
@@ -1173,7 +1188,7 @@ Scope {
                                     }
                                 }
                                 Rectangle {
-                                    width: (controlCenterFrame.width / 8) + 30
+                                    width: 100
                                     height: 340
                                     radius: 16
                                     color: root.backgroundColor
@@ -1200,19 +1215,35 @@ Scope {
                                                 height: 210
                                                 radius: 24
                                                 color: Qt.darker(root.backgroundColor, 1.3)
+                                                
                                                 Rectangle {
                                                     width: parent.width
-                                                    height: parent.height * 0.96 // Dynamic fill calculated from percentage
-                                                    anchors.bottom: parent.bottom // Anchored to bottom so it fills upward
+                                                    height: parent.height * Pipewire.defaultAudioSink?.audio.volume
+                                                    anchors.bottom: parent.bottom
                                                     bottomLeftRadius: 16
-                                                    bottomRightRadius: 16   
+                                                    bottomRightRadius: 16
                                                     color: root.textColor
+                                                }
+
+                                                MouseArea {
+                                                    id: volumeSliderArea
+                                                    anchors.fill: parent
+                                                    enabled: Island.controlCenterExpanded
+
+                                                    function seek(mouseY) {
+                                                        let volume = Pipewire.defaultAudioSink?.audio.volume;
+
+                                                        const ratio = Math.max(0, Math.min(1, 1 - (mouseY / height)));
+                                                        Pipewire.defaultAudioSink.audio.volume = ratio;
+                                                    }
+                                                    onPressed: mouse => seek(mouse.y)
+                                                    onPositionChanged: mouse => { if (pressed) seek(mouse.y) }
                                                 }
                                             }
                                         }
                                         Text {
                                             anchors.horizontalCenter: parent.horizontalCenter
-                                            text: "68%"
+                                            text: Math.round(Pipewire.defaultAudioSink?.audio.volume * 100) + "%"
                                             color: root.textColor
                                             font {
                                                 family: root.font
@@ -1221,6 +1252,113 @@ Scope {
                                         }
                                     }
                                 }
+                                Rectangle {
+                                    Column {
+                                        anchors.fill: parent
+                                        Row {
+                                            anchors.fill: parent
+                                            anchors.margins: 15
+                                            Text {
+                                                text: "Notifications"
+                                                color: root.textColor
+                                                font {
+                                                    family: root.font
+                                                    pixelSize: root.fontSize
+                                                }
+                                            }
+                                            Rectangle {
+                                                anchors.right: parent.right
+                                                anchors.top: parent.top
+                                                anchors.topMargin: -7
+                                                width: 36
+                                                height: 36
+                                                radius: 18
+                                                color: root.notifMuted ? Qt.lighter(root.backgroundColor, 1.6) : Qt.lighter(root.backgroundColor, 1.6)
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: Icons.bellOff
+                                                    color: root.notifMuted ? "#FACC15" : root.textColor
+                                                    font {
+                                                        family: root.iconFont
+                                                        pixelSize: root.fontSize + 2
+                                                    }
+                                                }
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    enabled: Island.controlCenterExpanded
+                                                    onClicked: {
+                                                        root.notifMuted = !root.notifMuted
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        ListModel {
+
+                                        }
+                                        Column {
+                                            spacing: 15
+                                            anchors.centerIn: parent
+
+                                            Text {
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                text: Icons.bellCheck
+                                                color: root.textColor
+                                                font {
+                                                    family: root.iconFont
+                                                    pixelSize: root.fontSize + 32
+                                                }
+                                            }
+                                            Text {
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                text: "All quiet for now."
+                                                color: root.textColor
+                                                font {
+                                                    family: root.font
+                                                    pixelSize: root.fontSize
+                                                }
+                                            }
+                                        }
+                                        Rectangle {
+                                            height: 45
+                                            radius: 16
+                                            color: Qt.lighter(root.backgroundColor, 1.6)
+                                            anchors.bottom: parent.bottom
+                                            anchors.left: parent.left
+                                            anchors.right: parent.right
+                                            anchors.margins: 15
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "Clear all"
+                                                color: root.textColor
+                                                font {
+                                                    family: root.font
+                                                    pixelSize: root.fontSize - 2
+                                                }
+                                            }
+                                        }
+                                    }
+                                    width: 295
+                                    height: 660
+                                    radius: 16
+                                    color: root.backgroundColor
+                                }
+                            }
+                        }
+                        Column {
+                            anchors.top: parent.top
+                            anchors.topMargin: 425
+                            spacing: 15
+                            Rectangle {
+                                radius: 16
+                                width: 581
+                                height: 210
+                                color: root.backgroundColor
+                            }
+                            Rectangle {
+                                radius: 16
+                                width: 581
+                                height: 78
+                                color: root.backgroundColor
                             }
                         }
                     }

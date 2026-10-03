@@ -20,8 +20,9 @@ ShellRoot {
     readonly property MprisPlayer activePlayer: Mpris.players.values[0].identity == "Spotify" ? Mpris.players.values[0] : null  
     readonly property bool playerAvailable: activePlayer != null
 
-    property bool notifMuted: false
+    property bool notifMuted: true
     property bool nightLight: false
+    property real brightness: 1
 
     SystemClock {
         id: clock

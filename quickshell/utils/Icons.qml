@@ -24,4 +24,5 @@ Singleton {
     property string bellRing: "\ue059"
     property string nightLight: "\ue2b2"
     property string recording: "\ue3f6"
+    property string bellCheck: "\ue6ef"
 }   
