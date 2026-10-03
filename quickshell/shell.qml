@@ -24,6 +24,10 @@ ShellRoot {
     property bool nightLight: false
     property real brightness: 1
 
+    ListModel {
+        id: notifHistory
+    }
+
     SystemClock {
         id: clock
         precision: SystemClock.Seconds
@@ -32,13 +36,21 @@ ShellRoot {
     DynamicIsland {}
     
     NotificationServer {
+        actionsSupported: true
         imageSupported: true
+        bodySupported: true
         bodyImagesSupported: true
         onNotification: n => {
             n.tracked = true
             if(!notifMuted) {
                 Island.showNotification(n)
             }
+            notifHistory.insert(0, {
+                appName: n.appName,
+                summary: n.summary,
+                body: n.body,
+                time: Qt.formatDateTime(clock, "HH:mm")
+            })
         }
     }
     onPlayerAvailableChanged: {
