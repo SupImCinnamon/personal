@@ -13,6 +13,7 @@ Scope {
     property int barCount: 6
     property int mediaAnimDuration: 150
     property bool lyricsOpen: false
+    property bool controlCenterOpen: false
     property var barLevels: {
         let initialLevels = [];
         for(let i = 0; i < barRoot.barCount; i++) {
@@ -151,14 +152,15 @@ Scope {
 
                 function viewFor(activity, kind) {
                     switch (activity + ":" + kind) {
-                    case "idle:compact":     return idleCompact
-                    case "idle:expanded":    return idleExpanded
-                    case "notification:compact":    return notifCompact
-                    case "notification:expanded":   return notifExpanded
-                    case "media:compact":    return mediaCompact
-                    case "media:expanded":   return mediaExpanded
-                    case "dragDrop:compact":   return dragDropCompact
-                    case "dragDrop:expanded":   return dragDropExpanded
+                    case "idle:compact":             return idleCompact
+                    case "idle:expanded":            return idleExpanded
+                    case "notification:compact":     return notifCompact
+                    case "notification:expanded":    return notifExpanded
+                    case "media:compact":            return mediaCompact
+                    case "media:expanded":           return mediaExpanded
+                    case "dragDrop:compact":         return dragDropCompact
+                    case "dragDrop:expanded":        return dragDropExpanded
+                    case "controlCenter:expanded":   return controlCenterExpanded
 
                     default:
                         console.warn("viewFor: no view for", activity, kind)
@@ -178,8 +180,20 @@ Scope {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                     onContainsMouseChanged: Island.hovered = containsMouse
-                    onClicked: Island.expanded = !Island.expanded
+                    onClicked: mouse =>{
+                        if (mouse.button == Qt.RightButton) {
+                            Island.controlCenter = true;
+                            Island.expanded = true;
+                        } else {
+                            Island.expanded = !Island.expanded
+                            console.log(Island.primary)
+                            if (Island.controlCenter) {
+                                Island.controlCenter = null;
+                            }
+                        }
+                    }
                 }
 
                 Loader {
@@ -314,6 +328,8 @@ Scope {
                                 source: Island.media ? Island.media.trackArtUrl : ""
                                 asynchronous: false
                                 cache: false
+                                smooth: true
+                                mipmap: true
                             }
                         }
                         Row {
@@ -387,6 +403,10 @@ Scope {
                                             source: Island.media ? Island.media.trackArtUrl : ""
                                             asynchronous: false
                                             cache: false
+                                            sourceSize.width: 256
+                                            sourceSize.height: 256
+                                            smooth: true
+                                            mipmap: true
                                         }
                                     }
                                     Row {
@@ -848,8 +868,251 @@ Scope {
 
                 Component {
                     id: dragDropExpanded
-                    Text{
+                    Text {
                         
+                    }
+                }
+                Component {
+                    id: controlCenterExpanded
+                    Rectangle {
+                        id: controlCenterFrame
+                        anchors.fill: parent
+                        anchors.margins: 15
+                        radius: 16
+                        color: "transparent"
+                        Column {
+                            anchors.fill: parent
+                            spacing: 15
+                            Rectangle {
+                                width: parent.width
+                                height: 55
+                                radius: 16
+                                color: root.backgroundColor
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 3
+                                    Row {
+                                        anchors.left: parent.left
+                                        anchors.top: parent.top
+                                        spacing: 15
+                                        anchors.leftMargin: 3
+                                        anchors.topMargin: 4
+                                        ClippingRectangle {
+                                            width: 45
+                                            height: 45
+                                            radius: 25
+                                            Image {
+                                                fillMode: Image.PreserveAspectCrop
+                                                width: 45
+                                                height: 45
+                                                sourceSize.width: 90
+                                                sourceSize.height: 90
+                                                smooth: true
+                                                mipmap: false
+                                                source: "file:///home/cinnamon/Desktop/face.png"
+                                            }
+                                        }
+                                        Column {
+                                            anchors.top: parent.top
+                                            anchors.topMargin: 4
+                                            Text {
+                                                text: "Cinnamon"
+                                                color: root.textColor
+                                                font {
+                                                    family: root.font
+                                                    pixelSize: root.fontSize - 2
+                                                }
+                                            }
+                                            Text {
+                                                text: "EndeavourOS"
+                                                color: root.textColorSecondary
+                                                font {
+                                                    family: root.font
+                                                    pixelSize: root.fontSize - 2
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Column {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.top: parent.top
+                                        anchors.topMargin: 0
+                                        spacing: -3
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: Qt.formatTime(clock.date, "hh:mm")
+                                            color: root.textColor
+                                            font {
+                                                family: root.font
+                                                pixelSize: root.fontSizeBig 
+                                                bold: true
+                                            }
+                                        }
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: Qt.formatDate(clock.date, "ddd, d MMM")
+                                            color: root.textColorSecondary
+                                            font {
+                                                family: root.font
+                                                pixelSize: root.fontSize - 4
+                                            }
+                                        }
+                                    }
+                                    Rectangle {
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: 7
+                                        anchors.topMargin: 5
+                                        width: 120
+                                        height: 45
+                                        radius: 16
+                                        color: Qt.lighter(root.backgroundColor, 1.6)
+                                        Row {
+                                            anchors.fill: parent
+                                            anchors.topMargin: -1
+                                            Rectangle {
+                                                anchors.left: parent.left
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                anchors.leftMargin: 12
+                                                width: 36
+                                                height: 36
+                                                radius: 18
+                                                color: Qt.lighter(root.backgroundColor, 2.2)
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: Icons.cog
+                                                    color: root.textColor
+                                                    font {
+                                                        family: root.iconFont
+                                                        pixelSize: root.fontSize + 6
+                                                    }
+                                                }
+                                            }
+                                            Rectangle {
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: 1
+                                                height: 28
+                                                radius: 2
+                                                color: Qt.lighter(root.backgroundColor, 3)
+                                            }
+                                            Rectangle {
+                                                anchors.right: parent.right
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                anchors.rightMargin: 12
+                                                width: 36
+                                                height: 36
+                                                radius: 18
+                                                color: Qt.lighter(root.backgroundColor, 2.2)
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: Icons.more
+                                                    color: root.textColor
+                                                    font {
+                                                        family: root.iconFont
+                                                        pixelSize: root.fontSize + 6
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Row {
+                                spacing: 15
+                                Column {
+                                    spacing: 15
+                                    Rectangle {
+                                        width: (controlCenterFrame.width / 2) + 55
+                                        height: 250
+                                        radius: 16
+                                        color: root.backgroundColor
+                                    }
+                                    Row {
+                                        spacing: 15
+                                        Rectangle {
+                                            width: (controlCenterFrame.width / 8) - 2
+                                            height: 75
+                                            radius: 16
+                                            color: root.backgroundColor
+                                        }
+                                                                               Rectangle {
+                                            width: (controlCenterFrame.width / 8) - 2
+                                            height: 75
+                                            radius: 16
+                                            color: root.backgroundColor
+                                        }
+                                                                               Rectangle {
+                                            width: (controlCenterFrame.width / 8) - 2
+                                            height: 75
+                                            radius: 16
+                                            color: root.backgroundColor
+                                        }
+                                                                               Rectangle {
+                                            width: (controlCenterFrame.width / 8) - 2
+                                            height: 75
+                                            radius: 16
+                                            color: root.backgroundColor
+                                        }
+                                    }
+                                }
+                                Rectangle {
+                                    width: (controlCenterFrame.width / 8) + 35
+                                    height: 340
+                                    radius: 16
+                                    color: root.backgroundColor
+                                    Column {
+                                        spacing: 15
+                                        anchors.centerIn: parent
+                                        anchors.top: parent.top
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: Icons.brightnessFull
+                                            color: root.textColor
+                                            font {
+                                                family: root.iconFont
+                                                pixelSize: root.fontSize + 12
+                                            }
+                                        }
+                                        Item {
+                                            width: 64
+                                            height: 210
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            ClippingRectangle {
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: 64
+                                                height: 210
+                                                radius: 24
+                                                color: Qt.darker(root.backgroundColor, 1.3)
+                                                Rectangle {
+                                                    width: parent.width
+                                                    height: parent.height * 0.96 // Dynamic fill calculated from percentage
+                                                    anchors.bottom: parent.bottom // Anchored to bottom so it fills upward
+                                                    bottomLeftRadius: 16
+                                                    bottomRightRadius: 16   
+                                                    color: root.textColorSecondary
+                                                }
+                                            }
+                                        }
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: "68%"
+                                            color: root.textColorSecondary
+                                            font {
+                                                family: root.font
+                                                pixelSize: root.fontSize
+                                            }
+                                        }
+                                    }
+                                }
+                                Rectangle {
+                                    width: (controlCenterFrame.width / 8) + 35
+                                    height: 340
+                                    radius: 16
+                                    color: root.backgroundColor
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -859,7 +1122,7 @@ Scope {
                 readonly property bool shown:
                     (Island.secondary !== ""
                     && !Island.expanded
-                    && pill.viewFor(Island.secondary, "bubble") !== null) || true
+                    && pill.viewFor(Island.secondary, "bubble") !== null)
 
                 anchors.left: pill.right
                 anchors.leftMargin: shown ? 8 : 0

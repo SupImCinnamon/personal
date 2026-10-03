@@ -15,6 +15,7 @@ ShellRoot {
     property color textColor: "#ffffff"
     property color textColorSecondary: "#aaaaaa"
     property color pillColor: "#000000"
+    property color backgroundColor: "#252526"
 
     readonly property MprisPlayer activePlayer: Mpris.players.values[0].identity == "Spotify" ? Mpris.players.values[0] : null  
     readonly property bool playerAvailable: activePlayer != null
@@ -30,7 +31,7 @@ ShellRoot {
         bodyImagesSupported: true
         onNotification: n => {
             n.tracked = true
-            Island.showNotification(n)
+            //Island.showNotification(n)
         }
     }
     onPlayerAvailableChanged: {

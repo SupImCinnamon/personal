@@ -16,4 +16,8 @@ Singleton {
     property string youtubeDownload: "\ue5ec"
     property string check: "\ue226"
     property string cog: "\ue154"
+    property string more: "\ue0b6"
+    property string brightnessFull: "\ue178"
+    property string brightnessMed: "\ue2b1"
+    property string brightnessLow: "\ue299"
 }   

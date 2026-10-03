@@ -16,9 +16,12 @@ Singleton {
     property var dragDropType: null
     property var dragDropContent: null
 
+    property var controlCenter: null
+
     property string pinned: ""
 
     readonly property string activity:
+        controlCenter ? "controlCenter" :
         dragDrop ? "dragDrop" :
         notification ? "notification" :
         media ? "media" :
@@ -26,6 +29,7 @@ Singleton {
 
     readonly property var activities: {
         const out = []
+        if (controlCenter)out.push("controlCenter")
         if (dragDrop)     out.push("dragDrop")
         if (notification) out.push("notification")      // interrupts everything
         if (media)        out.push("media")      // outranks recording
@@ -41,6 +45,7 @@ Singleton {
     readonly property string secondary: activities.slice(1).find(a => bubbleCapable.includes(a)) ?? ""
 
     readonly property var layouts: ({
+        controlCenter:{ compact: Qt.size(150, 30), expanded: Qt.size(660, 760) },
         notification: { compact: Qt.size(200, 30), expanded: Qt.size(420, 150) },
         dragDrop:     { compact: Qt.size(230, 30), expanded: Qt.size(420, 185) },
         media:        { compact: Qt.size(150, 30), expanded: Qt.size(420, 185) },
