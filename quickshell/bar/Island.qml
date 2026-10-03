@@ -8,6 +8,7 @@ Singleton {
 
     property bool expanded: false
     property bool hovered: false
+    property bool islandPinned: false
 
     property var notification: null
     property var media: null
@@ -45,7 +46,7 @@ Singleton {
     readonly property string secondary: activities.slice(1).find(a => bubbleCapable.includes(a)) ?? ""
 
     readonly property var layouts: ({
-        controlCenter:{ compact: Qt.size(150, 30), expanded: Qt.size(660, 760) },
+        controlCenter:{ compact: Qt.size(150, 30), expanded: Qt.size(620, 760) },
         notification: { compact: Qt.size(200, 30), expanded: Qt.size(420, 150) },
         dragDrop:     { compact: Qt.size(230, 30), expanded: Qt.size(420, 185) },
         media:        { compact: Qt.size(150, 30), expanded: Qt.size(420, 185) },

@@ -69,6 +69,12 @@ Scope {
         }
     }
 
+    Process {
+        id: nightLightProc
+        command: ["wlsunset", "-t", "5000"]
+        running: false
+    }
+
     Timer {
         interval: 1000
         repeat: true
@@ -103,7 +109,7 @@ Scope {
             required property var modelData
             screen: modelData
 
-            WlrLayershell.layer: Island.notification ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.layer: (Island.notification || Island.islandPinned) ? WlrLayer.Overlay : WlrLayer.Top
 
             anchors.top: true
             margins.top: 5
@@ -180,12 +186,14 @@ Scope {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                     onContainsMouseChanged: Island.hovered = containsMouse
                     onClicked: mouse =>{
                         if (mouse.button == Qt.RightButton) {
                             Island.controlCenter = true;
                             Island.expanded = true;
+                        } else if (mouse.button == Qt.MiddleButton) {
+                            Island.islandPinned = !Island.islandPinned
                         } else {
                             Island.expanded = !Island.expanded
                             console.log(Island.primary)
@@ -1023,41 +1031,100 @@ Scope {
                                 Column {
                                     spacing: 15
                                     Rectangle {
-                                        width: (controlCenterFrame.width / 2) + 55
+                                        width: (controlCenterFrame.width / 2) + 57
                                         height: 250
                                         radius: 16
                                         color: root.backgroundColor
                                     }
                                     Row {
-                                        spacing: 15
+                                        spacing: 19
                                         Rectangle {
-                                            width: (controlCenterFrame.width / 8) - 2
+                                            width: (controlCenterFrame.width / 8)
                                             height: 75
                                             radius: 16
-                                            color: root.backgroundColor
+                                            color: root.notifMuted ? root.textColorSecondary : root.backgroundColor
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: Icons.bellOff
+                                                color: root.textColor
+                                                font {
+                                                    family: root.iconFont
+                                                    pixelSize: root.fontSize + 12
+                                                }
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                enabled: Island.controlCenterExpanded
+                                                onClicked: {
+                                                    root.notifMuted = !root.notifMuted
+                                                }
+                                            }
                                         }
-                                                                               Rectangle {
-                                            width: (controlCenterFrame.width / 8) - 2
+                                        Rectangle {
+                                            width: (controlCenterFrame.width / 8) 
                                             height: 75
                                             radius: 16
                                             color: root.backgroundColor
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: Icons.recording
+                                                color: root.textColor
+                                                font {
+                                                    family: root.iconFont
+                                                    pixelSize: root.fontSize + 16
+                                                }
+                                            }
                                         }
-                                                                               Rectangle {
-                                            width: (controlCenterFrame.width / 8) - 2
+                                        Rectangle {
+                                            width: (controlCenterFrame.width / 8) 
                                             height: 75
                                             radius: 16
-                                            color: root.backgroundColor
+                                            color: root.nightLight ? root.textColorSecondary : root.backgroundColor
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: Icons.nightLight
+                                                color: root.textColor
+                                                font {
+                                                    family: root.iconFont
+                                                    pixelSize: root.fontSize + 16
+                                                }
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                enabled: Island.controlCenterExpanded
+                                                onClicked: {
+                                                    if(root.nightLight) {
+                                                        nightLightProc.running = false;
+                                                        root.nightLight = false;
+                                                    } else {
+                                                        if(!nightLightProc.running) {
+                                                            nightLightProc.running = true;
+                                                            root.nightLight = true;
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
-                                                                               Rectangle {
-                                            width: (controlCenterFrame.width / 8) - 2
+                                        Rectangle {
+                                            width: (controlCenterFrame.width / 8) 
                                             height: 75
                                             radius: 16
                                             color: root.backgroundColor
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: Icons.bellOff
+                                                color: root.textColor
+                                                font {
+                                                    family: root.iconFont
+                                                    pixelSize: root.fontSize + 12
+                                                }
+                                            }
                                         }
                                     }
                                 }
                                 Rectangle {
-                                    width: (controlCenterFrame.width / 8) + 35
+                                    width: (controlCenterFrame.width / 8) + 30
                                     height: 340
                                     radius: 16
                                     color: root.backgroundColor
@@ -1080,7 +1147,56 @@ Scope {
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             ClippingRectangle {
                                                 anchors.horizontalCenter: parent.horizontalCenter
-                                                width: 64
+                                                width: 60
+                                                height: 210
+                                                radius: 24
+                                                color: Qt.darker(root.backgroundColor, 1.3)
+                                                Rectangle {
+                                                    width: parent.width
+                                                    height: parent.height * 0.66 // Dynamic fill calculated from percentage
+                                                    anchors.bottom: parent.bottom // Anchored to bottom so it fills upward
+                                                    bottomLeftRadius: 16
+                                                    bottomRightRadius: 16   
+                                                    color: root.textColor
+                                                }
+                                            }
+                                        }
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: "68%"
+                                            color: root.textColor
+                                            font {
+                                                family: root.font
+                                                pixelSize: root.fontSize
+                                            }
+                                        }
+                                    }
+                                }
+                                Rectangle {
+                                    width: (controlCenterFrame.width / 8) + 30
+                                    height: 340
+                                    radius: 16
+                                    color: root.backgroundColor
+                                    Column {
+                                        spacing: 15
+                                        anchors.centerIn: parent
+                                        anchors.top: parent.top
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: Icons.volumeFull
+                                            color: root.textColor
+                                            font {
+                                                family: root.iconFont
+                                                pixelSize: root.fontSize + 12
+                                            }
+                                        }
+                                        Item {
+                                            width: 64
+                                            height: 210
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            ClippingRectangle {
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: 60
                                                 height: 210
                                                 radius: 24
                                                 color: Qt.darker(root.backgroundColor, 1.3)
@@ -1090,26 +1206,20 @@ Scope {
                                                     anchors.bottom: parent.bottom // Anchored to bottom so it fills upward
                                                     bottomLeftRadius: 16
                                                     bottomRightRadius: 16   
-                                                    color: root.textColorSecondary
+                                                    color: root.textColor
                                                 }
                                             }
                                         }
                                         Text {
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             text: "68%"
-                                            color: root.textColorSecondary
+                                            color: root.textColor
                                             font {
                                                 family: root.font
                                                 pixelSize: root.fontSize
                                             }
                                         }
                                     }
-                                }
-                                Rectangle {
-                                    width: (controlCenterFrame.width / 8) + 35
-                                    height: 340
-                                    radius: 16
-                                    color: root.backgroundColor
                                 }
                             }
                         }

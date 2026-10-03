@@ -19,6 +19,10 @@ ShellRoot {
 
     readonly property MprisPlayer activePlayer: Mpris.players.values[0].identity == "Spotify" ? Mpris.players.values[0] : null  
     readonly property bool playerAvailable: activePlayer != null
+
+    property bool notifMuted: false
+    property bool nightLight: false
+
     SystemClock {
         id: clock
         precision: SystemClock.Seconds
@@ -31,7 +35,9 @@ ShellRoot {
         bodyImagesSupported: true
         onNotification: n => {
             n.tracked = true
-            //Island.showNotification(n)
+            if(!notifMuted) {
+                Island.showNotification(n)
+            }
         }
     }
     onPlayerAvailableChanged: {

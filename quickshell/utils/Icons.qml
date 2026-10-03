@@ -20,4 +20,8 @@ Singleton {
     property string brightnessFull: "\ue178"
     property string brightnessMed: "\ue2b1"
     property string brightnessLow: "\ue299"
+    property string bellOff: "\ue05a"
+    property string bellRing: "\ue059"
+    property string nightLight: "\ue2b2"
+    property string recording: "\ue3f6"
 }   
