@@ -25,4 +25,9 @@ Singleton {
     property string nightLight: "\ue2b2"
     property string recording: "\ue3f6"
     property string bellCheck: "\ue6ef"
+    property string image: "\ue0f6"
+    property string video: "\ue481"
+    property string folder: "\ue0d7"
+    property string convert: "\ue144"
+    property string scanText: "\ue538"
 }   

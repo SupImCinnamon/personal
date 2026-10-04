@@ -20,10 +20,9 @@ Item {
             anchors.topMargin: 15
             anchors.leftMargin: 15
 
-            RowLayout {
+            Item {
                 width: parent.width
-                spacing: 0
-
+                height: 70
                 ClippingRectangle {
                     width: 64
                     height: 64
@@ -100,13 +99,13 @@ Item {
                 }
 
                 Column {
-                    anchors.top: parent.top
-                    anchors.left: parent.left
+                    anchors.fill: parent
                     anchors.leftMargin: 92
-                    anchors.topMargin: 9
+                    anchors.topMargin: 12
+                    spacing: 0
 
                     Text {
-                        Layout.fillWidth: true
+
                         elide: Text.ElideRight
                         text: Island.media ? (Island.media.trackTitle) : ""
                         color: "#FFFFFF"
@@ -116,7 +115,7 @@ Item {
                     }
 
                     Text {
-                        Layout.fillWidth: true
+
                         elide: Text.ElideRight
                         text: Island.media ? (Island.media.trackArtist || "") : ""
                         color: root.textColorSecondary

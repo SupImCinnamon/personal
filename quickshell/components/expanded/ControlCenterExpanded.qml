@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Pipewire
 import qs.utils
@@ -19,7 +20,7 @@ Rectangle {
             height: 55
             radius: 16
             color: root.backgroundColor
-            RowLayout {
+            Item {
                 anchors.fill: parent
                 anchors.leftMargin: 3
                 Row {
@@ -98,7 +99,7 @@ Rectangle {
                     height: 45
                     radius: 16
                     color: Qt.lighter(root.backgroundColor, 1.6)
-                    Row {
+                    Item {
                         anchors.fill: parent
                         anchors.topMargin: -1
                         Rectangle {
@@ -177,7 +178,7 @@ Rectangle {
                         }
                         MouseArea {
                             anchors.fill: parent
-                            enabled: Island.controlCenterExpanded
+                            enabled: Island.controlCenter && Island.expanded
                             onClicked: {
                                 root.notifMuted = !root.notifMuted
                             }
@@ -215,7 +216,7 @@ Rectangle {
                         }
                         MouseArea {
                             anchors.fill: parent
-                            enabled: Island.controlCenterExpanded
+                            enabled: Island.controlCenter && Island.expanded
                             onClicked: {
                                 if(root.nightLight) {
                                     nightLightProc.running = false;
@@ -285,7 +286,7 @@ Rectangle {
                             MouseArea {
                                 id: brightnessSliderArea
                                 anchors.fill: parent
-                                enabled: Island.controlCenterExpanded
+                                enabled: Island.controlCenter && Island.expanded
 
                                 function seek(mouseY) {
                                     const ratio = Math.max(0, Math.min(1, 1 - (mouseY / height)));
@@ -348,7 +349,7 @@ Rectangle {
                             MouseArea {
                                 id: volumeSliderArea
                                 anchors.fill: parent
-                                enabled: Island.controlCenterExpanded
+                                enabled: Island.controlCenter && Island.expanded
 
                                 function seekVolume(mouseY) {
                                     const ratio = Math.max(0, Math.min(1, 1 - (mouseY / height)));
@@ -371,51 +372,128 @@ Rectangle {
                 }
             }
             Rectangle {
-                Column {
+                width: 340
+                height: 660
+                radius: 16
+                color: root.backgroundColor
+                Item {
                     anchors.fill: parent
-                    Row {
-                        anchors.fill: parent
-                        anchors.margins: 15
+                    anchors.margins: 15
+                    Text {
+                        text: "Notifications"
+                        color: root.textColor
+                        font {
+                            family: root.font
+                            pixelSize: root.fontSize
+                        }
+                    }
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.topMargin: -7
+                        width: 36
+                        height: 36
+                        radius: 18
+                        color: root.notifMuted ? Qt.lighter(root.backgroundColor, 1.6) : Qt.lighter(root.backgroundColor, 1.6)
                         Text {
-                            text: "Notifications"
-                            color: root.textColor
+                            anchors.centerIn: parent
+                            text: Icons.bellOff
+                            color: root.notifMuted ? "#FACC15" : root.textColor
                             font {
-                                family: root.font
-                                pixelSize: root.fontSize
+                                family: root.iconFont
+                                pixelSize: root.fontSize + 2
                             }
                         }
-                        Rectangle {
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.topMargin: -7
-                            width: 36
-                            height: 36
-                            radius: 18
-                            color: root.notifMuted ? Qt.lighter(root.backgroundColor, 1.6) : Qt.lighter(root.backgroundColor, 1.6)
-                            Text {
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: Island.controlCenter && Island.expanded
+                            onClicked: {
+                                root.notifMuted = !root.notifMuted
+                            }
+                        }
+                    }
+                    
+                    ListView {
+                        anchors.fill: parent
+                        anchors.topMargin: 50
+                        model: notifHistory
+                        spacing: 15
+                        clip: true 
+
+                        delegate: Rectangle {
+                            width: ListView.view.width 
+                            height: contentLayout.height + 24 
+                            color: Qt.lighter(root.backgroundColor, 1.6)
+                            radius: 16
+
+                            Row {
+                                id: contentLayout
+                                width: parent.width - 24 
                                 anchors.centerIn: parent
-                                text: Icons.bellOff
-                                color: root.notifMuted ? "#FACC15" : root.textColor
-                                font {
-                                    family: root.iconFont
-                                    pixelSize: root.fontSize + 2
+                                spacing: 12
+
+                                Image {
+                                    id: notifIcon
+                                    width: 40
+                                    height: 40
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    fillMode: Image.PreserveAspectFit
+                                    source: Quickshell.iconPath(appName)
+                                    asynchronous: false
+                                    cache: false
+                                }
+
+                                Column {
+                                    width: parent.width - notifIcon.width - parent.spacing
+                                    spacing: 4
+
+                                    Column {
+                                        width: parent.width
+                                        spacing: 0
+                                        
+                                        Text { 
+                                            width: parent.width
+                                            text: capitalizeFirstLetter(appName)
+                                            color: root.textColor
+                                            font.family: root.font
+                                            font.pixelSize: root.fontSize - 2
+                                            wrapMode: Text.WordWrap
+                                        }
+                                        Text { 
+                                            width: parent.width
+                                            text: summary
+                                            color: root.textColor
+                                            font.family: root.font
+                                            font.pixelSize: root.fontSize - 2
+                                            wrapMode: Text.WordWrap
+                                        }
+                                    }
+                                    
+                                    Text { 
+                                        width: parent.width
+                                        text: body
+                                        color: root.textColor
+                                        font.family: root.font
+                                        font.pixelSize: root.fontSize - 4
+                                        wrapMode: Text.WordWrap 
+                                    }
                                 }
                             }
+                            
                             MouseArea {
                                 anchors.fill: parent
-                                enabled: Island.controlCenterExpanded
                                 onClicked: {
-                                    root.notifMuted = !root.notifMuted
+                                    notif.dismiss()
+                                    notifHistory.remove(index)
                                 }
                             }
                         }
                     }
-                    ListModel {
-
-                    }
+                    
                     Column {
                         spacing: 15
                         anchors.centerIn: parent
+                        visible: notifHistory.count == 0
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -436,6 +514,7 @@ Rectangle {
                             }
                         }
                     }
+                    
                     Rectangle {
                         height: 45
                         radius: 16
@@ -455,10 +534,6 @@ Rectangle {
                         }
                     }
                 }
-                width: 295
-                height: 660
-                radius: 16
-                color: root.backgroundColor
             }
         }
     }

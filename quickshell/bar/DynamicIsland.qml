@@ -79,6 +79,24 @@ Scope {
     }
 
     Process {
+        id: mimeProc
+        property string target
+        command: ["file", "--brief", "--mime-type", target]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const mime = text.trim()
+                if (mime == "inode/directory") {
+                    Island.dragDropType = "folder"
+                } else if (mime.startsWith("image/")) {
+                    Island.dragDropType = "image"
+                } else if (mime.startsWith("video/")) {
+                    Island.dragDropType = "video"
+                }
+            }
+        }
+    }
+
+    Process {
         id: nightLightProc
         command: ["wlsunset", "-t", "5000"]
         running: false
@@ -133,37 +151,15 @@ Scope {
                 regions: [ Region { item: bubble } ]
             }
 
-            DropArea {
-                anchors.fill: parent
-
-                onEntered: (drag) => {
-                    drag.accept(Qt.CopyAction);
-                    Island.dragDrop = "drag";
-
-                    if (String(drag.text).includes("www.youtube.com")) {
-                        Island.dragDropType = "youtubeVideo";
-                    }
-                }
-
-                onExited: {
-                    Island.dragDrop = null
-                    Island.dragDropType = null
-                }
-
-                onDropped: (drop) => {
-                    drop.accept(Qt.CopyAction);
-                    if (String(drop.text).includes("www.youtube.com") && !ytDlProc.running) {
-                        ytDlProc.command = ["sh", "-c", Island.youtubeToYtdl(String(drop.text))]
-                        ytDlProc.running = true;
-                    }
-                }
-            }
-            ClippingRectangle {
+            Rectangle {
                 id: pill
                 x: (parent.width - width) / 2
 
                 readonly property var layout: Island.layouts[Island.primary]
                 readonly property size target: Island.currentSize
+
+                readonly property real extraWidth: contentLoader.item?.extraWidth ?? 0
+                readonly property real extraHeight: contentLoader.item?.extraHeight ?? 0
 
                 function viewFor(activity, kind) {
                     switch (activity + ":" + kind) {
@@ -175,6 +171,7 @@ Scope {
                     case "media:expanded":           return mediaExpanded
                     case "dragDrop:compact":         return dragDropCompact
                     case "dragDrop:expanded":        return dragDropExpanded
+                    case "controlCenter:compact":    return controlCenterCompact
                     case "controlCenter:expanded":   return controlCenterExpanded
 
                     default:
@@ -183,8 +180,8 @@ Scope {
                     }
                 }
 
-                width: target.width + (Island.hovered && !Island.expanded ? 16 : 0)
-                height: target.height + (Island.hovered && !Island.expanded ? 2 : 0)
+                width: target.width + extraWidth + (Island.hovered && !Island.expanded ? 16 : 0)
+                height: target.height + extraHeight + (Island.hovered && !Island.expanded ? 2 : 0)
                 radius: Math.min(height / 2, 34)
                 color: root.pillColor
                 clip: false
@@ -192,12 +189,61 @@ Scope {
                 Behavior on width  { SpringAnimation { spring: 4; damping: 0.38; epsilon: 0.5 } }
                 Behavior on height { SpringAnimation { spring: 4; damping: 0.38; epsilon: 0.5 } }
 
+                DropArea {
+                    id: pillDrop
+                    anchors.fill: parent
+
+                    onEntered: (drag) => {
+                        drag.accept(Qt.CopyAction)
+                        Island.dragDrop = true
+
+                        if (String(drag.text).includes("www.youtube.com")) {
+                            Island.dragDropType = "youtubeVideo"
+                            return
+                        }
+                        Island.expanded = true
+                    }
+
+                    onPositionChanged: (drag) => {
+                        const v = contentLoader.item
+                        if (v && v.updateDrag) v.updateDrag(pillDrop, drag.x, drag.y)
+                    }
+
+                    onExited: {
+                        const v = contentLoader.item
+                        if (v && v.dragLeft) v.dragLeft()
+                        Island.dragDrop = null
+                        Island.dragDropType = null
+                        mimeProc.running = false
+                        Island.expanded = false
+                    }
+
+                    onDropped: (drop) => {
+                        drop.accept(Qt.CopyAction)
+
+                        if (String(drop.text).includes("www.youtube.com") && !ytDlProc.running) {
+                            ytDlProc.command = ["sh", "-c", Island.youtubeToYtdl(String(drop.text))]
+                            ytDlProc.running = true
+                            return                      // ytDlProc.onExited resets the state
+                        }
+
+                        const v = contentLoader.item
+                        if (v && v.handleDrop) {
+                            const r = v.handleDrop(pillDrop, drop.x, drop.y)
+                            if (r.action) barRoot.runAction(r.action, drop.urls, r.format)
+                        }
+                        Island.dragDrop = null
+                        Island.dragDropType = null
+                        Island.expanded = false
+                    }
+                }
+
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                     onContainsMouseChanged: Island.hovered = containsMouse
-                    onClicked: mouse =>{
+                    onClicked: mouse => {
                         if (mouse.button == Qt.RightButton) {
                             Island.controlCenter = true;
                             Island.expanded = true;
@@ -205,7 +251,6 @@ Scope {
                             Island.islandPinned = !Island.islandPinned
                         } else {
                             Island.expanded = !Island.expanded
-                            console.log(Island.primary)
                             if (Island.controlCenter) {
                                 Island.controlCenter = null;
                             }
@@ -213,9 +258,16 @@ Scope {
                     }
                 }
 
-                Loader {
+                ClippingRectangle {
                     anchors.fill: parent
-                    sourceComponent: pill.viewFor(Island.primary, Island.expanded ? "expanded" : "compact") ?? pill.viewFor("idle", Island.expanded ? "expanded" : "compact")
+                    radius: pill.radius
+                    color: "transparent"
+
+                    Loader {
+                        id: contentLoader
+                        anchors.fill: parent
+                        sourceComponent: pill.viewFor(Island.primary, Island.expanded ? "expanded" : "compact") ?? pill.viewFor("idle", Island.expanded ? "expanded" : "compact")
+                    }
                 }
 
                 Component {
@@ -257,6 +309,12 @@ Scope {
                     id: dragDropExpanded
                     DragDropExpanded {}
                 }
+
+                Component {
+                    id: controlCenterCompact
+                    ControlCenterCompact {}
+                }
+
                 Component {
                     id: controlCenterExpanded
                     ControlCenterExpanded {}
@@ -270,19 +328,20 @@ Scope {
                     && !Island.expanded
                     && pill.viewFor(Island.secondary, "bubble") !== null)
 
-                anchors.left: pill.right
-                anchors.leftMargin: shown ? 8 : 0
+                z: -1
+                height: pill.height
+                width: height
                 y: 0
-                width: shown ? 30 : 0
-                height: 30
                 radius: height / 2
                 color: root.pillColor
-                opacity: shown ? 1 : 0
-                clip: true
 
-                Behavior on anchors.leftMargin { NumberAnimation { duration: 150 } }
-                Behavior on width   { SpringAnimation { spring: 4; damping: 0.38; epsilon: 0.5 } }
-                Behavior on opacity { NumberAnimation { duration: 150 } }
+                anchors.left: pill.right
+                anchors.leftMargin: shown ? 8 : -width
+                visible: shown
+
+                Behavior on anchors.leftMargin {
+                    SpringAnimation { spring: 4; damping: 0.38; epsilon: 0.5 }
+                }
             }
         }
     }

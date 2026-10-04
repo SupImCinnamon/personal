@@ -16,6 +16,9 @@ ShellRoot {
     property color textColorSecondary: "#aaaaaa"
     property color pillColor: "#000000"
     property color backgroundColor: "#252526"
+    property color accent: "#378ADD"
+    property color accentSecondary: "#85B7EB"
+    property color accentBackground: "#0A2540"
 
     readonly property MprisPlayer activePlayer: Mpris.players.values[0].identity == "Spotify" ? Mpris.players.values[0] : null  
     readonly property bool playerAvailable: activePlayer != null
@@ -46,10 +49,11 @@ ShellRoot {
                 Island.showNotification(n)
             }
             notifHistory.insert(0, {
+                notif: n,
                 appName: n.appName,
                 summary: n.summary,
                 body: n.body,
-                time: Qt.formatDateTime(clock, "HH:mm")
+                time: Qt.formatDateTime(clock.date, "HH:mm")
             })
         }
     }

@@ -46,9 +46,9 @@ Singleton {
     readonly property string secondary: activities.slice(1).find(a => bubbleCapable.includes(a)) ?? ""
 
     readonly property var layouts: ({
-        controlCenter:{ compact: Qt.size(150, 30), expanded: Qt.size(920, 760) },
+        controlCenter:{ compact: Qt.size(150, 30), expanded: Qt.size(965, 760) },
         notification: { compact: Qt.size(200, 30), expanded: Qt.size(420, 150) },
-        dragDrop:     { compact: Qt.size(230, 30), expanded: Qt.size(420, 185) },
+        dragDrop:     { compact: Qt.size(230, 30), expanded: Qt.size(565, 170) },
         media:        { compact: Qt.size(150, 30), expanded: Qt.size(420, 185) },
         idle:         { compact: Qt.size(110, 30), expanded: Qt.size(420, 120) }
     })
@@ -104,7 +104,7 @@ Singleton {
         return `yt-dlp -f "bv*+ba/b" --merge-output-format mp4 -P "~/Videos/YTDLP" "https://www.youtube.com/watch?v=${videoId}"`;
     }
 
-    onPrimaryChanged: console.log("primary:", primary, JSON.stringify(activities))
+    //onPrimaryChanged: console.log("primary:", primary, JSON.stringify(activities))
     Timer {
         interval: 3250
         running: root.notification !== null && !root.hovered && !root.expanded

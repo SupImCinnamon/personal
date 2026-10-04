@@ -1,3 +1,2 @@
-import QtQuick
-Text {
-}
+import qs.components.expanded.subcomponents
+DragDropImage {}
