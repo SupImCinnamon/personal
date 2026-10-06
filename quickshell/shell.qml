@@ -2,6 +2,7 @@ import Quickshell
 import QtQuick
 import Quickshell.Services.Notifications
 import Quickshell.Services.Mpris
+import Quickshell.Io 
 import qs.bar
 
 ShellRoot {
@@ -62,6 +63,20 @@ ShellRoot {
             Island.media = activePlayer;
         } else {
             Island.media = null;
+        }
+    }
+
+    IpcHandler {
+        target: "island"
+
+        function appLauncherOpen(): void {
+            Island.appLauncher = true
+            Island.expanded = true
+        }
+
+        function appLauncherClose(): void {
+            Island.appLauncher = null
+            Island.expanded = false
         }
     }
 

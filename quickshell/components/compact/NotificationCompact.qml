@@ -22,5 +22,3 @@ Item {
         font.family: root.font
     }
 }
-
-

@@ -30,4 +30,14 @@ Singleton {
     property string folder: "\ue0d7"
     property string convert: "\ue144"
     property string scanText: "\ue538"
-}   
+    property string phone: "\ue133"
+    property string mic: "\ue118"
+    property string micOff: "\ue119"
+    property string deafen: "\ue0f1"
+    property string deafenOff: "\ue629"
+    property string camera: "\ue1a5"
+    property string cameraOff: "\ue1a6"
+    property string screenshare: "\ue14f"
+    property string screenshareOff: "\ue150"
+}
+   

@@ -416,6 +416,7 @@ Rectangle {
                     ListView {
                         anchors.fill: parent
                         anchors.topMargin: 50
+                        anchors.bottomMargin: 60
                         model: notifHistory
                         spacing: 15
                         clip: true 
@@ -483,7 +484,11 @@ Rectangle {
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
-                                    notif.dismiss()
+                                    try {
+                                        notif.dismiss()
+                                    } catch (err) {
+
+                                    }
                                     notifHistory.remove(index)
                                 }
                             }
@@ -522,7 +527,7 @@ Rectangle {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.margins: 15
+                        visible: notifHistory.count != 0
                         Text {
                             anchors.centerIn: parent
                             text: "Clear all"
@@ -530,6 +535,20 @@ Rectangle {
                             font {
                                 family: root.font
                                 pixelSize: root.fontSize - 2
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: notifHistory.count != 0
+                            onClicked: {
+                                for (let i = 0; i <= notifHistory.count; i++) {
+                                    try {
+                                        notifHistory.get(i).notif.dismiss()
+                                    } catch (err) {
+
+                                    }
+                                }
+                                notifHistory.clear()
                             }
                         }
                     }

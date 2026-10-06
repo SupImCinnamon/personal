@@ -2,6 +2,8 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
+import Quickshell.Io
+import qs.components.bridges
 
 Singleton {
     id: root
@@ -13,27 +15,45 @@ Singleton {
     property var notification: null
     property var media: null
     property var recording: null
+
     property var dragDrop: null
     property var dragDropType: null
     property var dragDropContent: null
+    property string dragDropName: ""
+    property string dragDropMeta: ""
+    property int dragDropCount: 0
 
     property var controlCenter: null
+    property var appLauncher: null
+    property var portal: null
+
+    property var incoming: DiscordBridge.incoming
+    property var incomingCall: null
+    property var call: null
 
     property string pinned: ""
 
     readonly property string activity:
+        portal ? "portal" :
+        incomingCall ? "incomingCall" :
+        appLauncher ? "appLauncher" :
         controlCenter ? "controlCenter" :
         dragDrop ? "dragDrop" :
         notification ? "notification" :
+        call ? "call" :
         media ? "media" :
         "idle"
 
     readonly property var activities: {
         const out = []
+        if (portal)       out.push("portal")
+        if (incomingCall) out.push("incomingCall")
+        if (appLauncher)  out.push("appLauncher")
         if (controlCenter)out.push("controlCenter")
         if (dragDrop)     out.push("dragDrop")
-        if (notification) out.push("notification")      // interrupts everything
-        if (media)        out.push("media")      // outranks recording
+        if (notification) out.push("notification")
+        if (call)         out.push("call")
+        if (media)        out.push("media")
         if (recording)    out.push("recording")
         if (out.length === 0) out.push("idle")
         return pinned && out.includes(pinned)
@@ -46,8 +66,12 @@ Singleton {
     readonly property string secondary: activities.slice(1).find(a => bubbleCapable.includes(a)) ?? ""
 
     readonly property var layouts: ({
+        portal:       { compact: Qt.size(150, 30), expanded: Qt.size(560, 210) },
+        appLauncher:  { compact: Qt.size(150, 30), expanded: Qt.size(640, 440) },
         controlCenter:{ compact: Qt.size(150, 30), expanded: Qt.size(965, 760) },
         notification: { compact: Qt.size(200, 30), expanded: Qt.size(420, 150) },
+        call:         { compact: Qt.size(200, 30), expanded: Qt.size(346, 150) },
+        incomingCall: { compact: Qt.size(200, 30), expanded: Qt.size(350, 65 ) },
         dragDrop:     { compact: Qt.size(230, 30), expanded: Qt.size(565, 170) },
         media:        { compact: Qt.size(150, 30), expanded: Qt.size(420, 185) },
         idle:         { compact: Qt.size(110, 30), expanded: Qt.size(420, 120) }
@@ -115,5 +139,54 @@ Singleton {
         running: media.playbackState == MprisPlaybackState.Playing && root.expanded
         // emit the positionChanged signal every frame.
         onTriggered: media.positionChanged()
+    }
+
+    function portalSend(obj) {
+        portalSock.write(JSON.stringify(obj) + "\n")
+        portalSock.flush()
+    }
+
+    function portalDone() {
+        portal = null
+        expanded = false
+    }
+
+    function portalAccept(uris) {
+        if (!portal) return
+        portalSend({ type: "result", id: portal.id, uris: uris })
+        portalDone()
+    }
+
+    function portalCancel() {
+        if (!portal) return
+        portalSend({ type: "cancel", id: portal.id })
+        portalDone()
+    }
+
+    Socket {
+        id: portalSock
+        path: Quickshell.env("XDG_RUNTIME_DIR") + "/island-portal.sock"
+        connected: true
+        parser: SplitParser {
+            onRead: data => {
+                let m
+                try { m = JSON.parse(data) } catch (e) { return }
+
+                if (m.type === "open" || m.type === "save" || m.type === "appchooser" || m.type === "screencast") {
+                    if (root.portal) root.portalCancel()   // don't leave an old request hanging
+                    root.portal = m
+                    root.expanded = true
+                } else if (m.type === "close" && root.portal && root.portal.id === m.id) {
+                    root.portalDone()
+                }
+            }
+        }
+        onConnectedChanged: if (!connected && root.portal) root.portalDone()
+    }
+
+    Timer {
+        interval: 2000; repeat: true
+        running: !portalSock.connected
+        onTriggered: portalSock.connected = true
     }
 }

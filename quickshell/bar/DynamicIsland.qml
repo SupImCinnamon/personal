@@ -17,7 +17,6 @@ Scope {
     id: barRoot
     property int barCount: 6
     property int mediaAnimDuration: 150
-    property bool lyricsOpen: false
     property bool controlCenterOpen: false
     property var barLevels: {
         let initialLevels = [];
@@ -91,9 +90,56 @@ Scope {
                     Island.dragDropType = "image"
                 } else if (mime.startsWith("video/")) {
                     Island.dragDropType = "video"
+                } else if (mime.startsWith("text/plain")) {
+                    Island.dragDropType = "text"
                 }
             }
         }
+    }
+
+    Process {
+        id: infoProc
+        property string path
+        command: ["sh", "-c",
+            'if [ -d "$1" ]; then echo inode/directory; ls -A -- "$1" | wc -l; '
+        + 'else file -L -b --mime-type -- "$1"; stat -L -c %s -- "$1"; fi',
+            "sh", path]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n")
+                const mime = lines[0] ?? ""
+                const n = parseInt(lines[1]) || 0
+                console.log(mime)
+
+                if (mime === "inode/directory") {
+                    Island.dragDropType = "folder"
+                    Island.dragDropMeta = "Folder, " + n + (n === 1 ? " item" : " items")
+                } else {
+                    if (mime.startsWith("image/"))      Island.dragDropType = "image"
+                    else if (mime.startsWith("video/")) Island.dragDropType = "video"
+                    Island.dragDropMeta = barRoot.describe(mime) + ", " + barRoot.formatSize(n)
+                }
+            }
+        }
+    }
+
+    function formatSize(bytes) {
+        const units = ["B", "KB", "MB", "GB", "TB"]
+        let i = 0
+        while (bytes >= 1000 && i < units.length - 1) { bytes /= 1000; i++ }
+        return (i === 0 ? bytes : bytes.toFixed(1)) + " " + units[i]
+    }
+
+    function describe(mime) {
+        const overrides = { "x-matroska": "MKV", "quicktime": "MOV", "x-msvideo": "AVI" }
+        const [kind, sub = ""] = mime.split("/")
+        const raw = sub.split("+")[0].replace(/^(x-|vnd\.)/, "")
+        const name = overrides[sub] ?? raw.toUpperCase()
+
+        if (kind === "image" || kind === "video" || kind === "audio") return name + " " + kind
+        if (mime === "application/pdf") return "PDF document"
+        if (kind === "text") return "Text file"
+        return name + " file"
     }
 
     Process {
@@ -136,8 +182,8 @@ Scope {
             required property var modelData
             screen: modelData
 
-            WlrLayershell.layer: (Island.notification || Island.islandPinned) ? WlrLayer.Overlay : WlrLayer.Top
-
+            WlrLayershell.layer: (Island.notification || Island.islandPinned || Island.portal) ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.keyboardFocus: (Island.portal && Island.expanded) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             anchors.top: true
             margins.top: 5
             exclusiveZone: Config.reservedSpace
@@ -153,7 +199,12 @@ Scope {
 
             Rectangle {
                 id: pill
+                width: target.width + extraWidth + (Island.hovered && !Island.expanded ? 16 : 0)
+                height: target.height + extraHeight + (Island.hovered && !Island.expanded ? 2 : 0)
                 x: (parent.width - width) / 2
+                radius: Math.min(height / 2, 34)
+                color: root.pillColor
+                clip: false
 
                 readonly property var layout: Island.layouts[Island.primary]
                 readonly property size target: Island.currentSize
@@ -173,6 +224,14 @@ Scope {
                     case "dragDrop:expanded":        return dragDropExpanded
                     case "controlCenter:compact":    return controlCenterCompact
                     case "controlCenter:expanded":   return controlCenterExpanded
+                    case "portal:compact":           return portalCompact
+                    case "portal:expanded":          return portalExpanded
+                    case "appLauncher:compact":      return appLauncherCompact
+                    case "appLauncher:expanded":     return appLauncherExpanded
+                    case "call:compact":             return callCompact
+                    case "call:expanded":            return callExpanded
+                    case "incomingCall:compact":     return incomingCallCompact
+                    case "incomingCall:expanded":    return incomingCallExpanded
 
                     default:
                         console.warn("viewFor: no view for", activity, kind)
@@ -180,11 +239,6 @@ Scope {
                     }
                 }
 
-                width: target.width + extraWidth + (Island.hovered && !Island.expanded ? 16 : 0)
-                height: target.height + extraHeight + (Island.hovered && !Island.expanded ? 2 : 0)
-                radius: Math.min(height / 2, 34)
-                color: root.pillColor
-                clip: false
 
                 Behavior on width  { SpringAnimation { spring: 4; damping: 0.38; epsilon: 0.5 } }
                 Behavior on height { SpringAnimation { spring: 4; damping: 0.38; epsilon: 0.5 } }
@@ -196,10 +250,19 @@ Scope {
                     onEntered: (drag) => {
                         drag.accept(Qt.CopyAction)
                         Island.dragDrop = true
+                        Island.dragDropContent = drag.text
 
                         if (String(drag.text).includes("www.youtube.com")) {
                             Island.dragDropType = "youtubeVideo"
                             return
+                        }
+                        if (drag.hasUrls) {
+                            const path = decodeURIComponent(drag.urls[0].toString().replace("file://", ""))
+                            Island.dragDropName = path.split("/").pop()
+                            Island.dragDropCount = drag.urls.length
+                            Island.dragDropMeta = ""
+                            infoProc.path = path
+                            infoProc.running = true
                         }
                         Island.expanded = true
                     }
@@ -212,10 +275,13 @@ Scope {
                     onExited: {
                         const v = contentLoader.item
                         if (v && v.dragLeft) v.dragLeft()
+                        mimeProc.running = false
                         Island.dragDrop = null
                         Island.dragDropType = null
-                        mimeProc.running = false
                         Island.expanded = false
+                        Island.dragDropName = ""
+                        Island.dragDropMeta = ""
+                        Island.dragDropCount = 0
                     }
 
                     onDropped: (drop) => {
@@ -224,17 +290,20 @@ Scope {
                         if (String(drop.text).includes("www.youtube.com") && !ytDlProc.running) {
                             ytDlProc.command = ["sh", "-c", Island.youtubeToYtdl(String(drop.text))]
                             ytDlProc.running = true
-                            return                      // ytDlProc.onExited resets the state
+                            return;
                         }
 
                         const v = contentLoader.item
                         if (v && v.handleDrop) {
                             const r = v.handleDrop(pillDrop, drop.x, drop.y)
-                            if (r.action) barRoot.runAction(r.action, drop.urls, r.format)
+                            if (r.action) v.runAction(r.action, drop.urls, r.format)
                         }
                         Island.dragDrop = null
                         Island.dragDropType = null
                         Island.expanded = false
+                        Island.dragDropName = ""
+                        Island.dragDropMeta = ""
+                        Island.dragDropCount = 0
                     }
                 }
 
@@ -318,6 +387,46 @@ Scope {
                 Component {
                     id: controlCenterExpanded
                     ControlCenterExpanded {}
+                }
+
+                Component {
+                    id: portalCompact
+                    PortalCompact {}
+                }
+
+                Component {
+                    id: portalExpanded
+                    PortalExpanded {}
+                }
+
+                Component {
+                    id: appLauncherCompact
+                    AppLauncherExpanded {}
+                }
+
+                Component {
+                    id: appLauncherExpanded
+                    AppLauncherExpanded {}
+                }
+
+                Component {
+                    id: callCompact
+                    CallCompact {}
+                }
+
+                Component {
+                    id: callExpanded
+                    CallExpanded {}
+                }
+
+                Component {
+                    id: incomingCallCompact
+                    IncomingCallCompact {}
+                }
+
+                Component {
+                    id: incomingCallExpanded
+                    IncomingCallExpanded {}
                 }
             }
 

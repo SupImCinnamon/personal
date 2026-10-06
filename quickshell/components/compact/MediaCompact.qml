@@ -21,7 +21,7 @@ Item {
             fillMode: Image.PreserveAspectCrop
             source: Island.media ? Island.media.trackArtUrl : ""
             asynchronous: false
-            cache: false
+            cache: true
             smooth: true
             mipmap: true
         }

@@ -6,20 +6,18 @@ import qs.utils
 Item {
     anchors.fill: parent
 
-    RowLayout {
+    Item {
         anchors.fill: parent
         anchors.leftMargin: 10
-        spacing: 10
 
         Text {
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
+            anchors.verticalCenter: parent.verticalCenter
             text: {
                 console.log(Island.dragDropType);
                 if (Island.dragDropType == "youtubeVideo") {
                     if (ytDlProc.running) {
                         Icons.cog;
-                        return ;
+                        return;
                     }
                     Icons.youtubeDownload;
                 } else {
@@ -29,23 +27,25 @@ Item {
             color: "white"
             font.bold: true
             font.family: root.iconFont
+            font.pixelSize: root.fontSize
         }
 
         Text {
-            anchors.fill: parent
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
+            anchors.centerIn: parent
             text: {
                 if (Island.dragDropType == "youtubeVideo") {
-                    if (ytDlProc.running)
+                    if (ytDlProc.running) {
                         "Downloading...";
-                    else
+                    } else {
                         "Drop to download";
+                    }
                 }
             }
             color: "white"
             font.bold: true
             font.family: root.font
+            font.pixelSize: root.fontSize
+
         }
 
     }

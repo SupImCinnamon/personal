@@ -7,11 +7,15 @@ import qs.utils
 
 Item {
     anchors.fill: parent
-
+    property bool lyricsOpen: false
+    property var extraHeight: lyricsOpen ? 100 : 0
+    onLyricsOpenChanged: if (lyricsOpen) lyricsPage.requestLyrics()
+    
     Item {
         anchors.fill: parent
-        opacity: barRoot.lyricsOpen ? 0 : 1
-
+        opacity: lyricsOpen ? 0 : 1
+        visible: opacity > 0
+        enabled: !lyricsOpen
         Column {
             width: parent.width - 32
             spacing: 15
@@ -37,7 +41,7 @@ Item {
                         fillMode: Image.PreserveAspectCrop
                         source: Island.media ? Island.media.trackArtUrl : ""
                         asynchronous: false
-                        cache: false
+                        cache: true
                         sourceSize.width: 256
                         sourceSize.height: 256
                         smooth: true
@@ -52,7 +56,7 @@ Item {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.rightMargin: 10
-                    anchors.topMargin: 10
+                    anchors.topMargin: 13
                     height: 22
                     spacing: 2
 
@@ -105,7 +109,7 @@ Item {
                     spacing: 0
 
                     Text {
-
+                        width: 220
                         elide: Text.ElideRight
                         text: Island.media ? (Island.media.trackTitle) : ""
                         color: "#FFFFFF"
@@ -115,7 +119,7 @@ Item {
                     }
 
                     Text {
-
+                        width: 220
                         elide: Text.ElideRight
                         text: Island.media ? (Island.media.trackArtist || "") : ""
                         color: root.textColorSecondary
@@ -414,8 +418,8 @@ Item {
                         anchors.fill: parent
                         anchors.margins: -6
                         onClicked: {
-                            barRoot.lyricsOpen = !barRoot.lyricsOpen;
-                            console.log(barRoot.lyricsOpen);
+                            lyricsOpen = !lyricsOpen;
+                            console.log(lyricsOpen);
                         }
                     }
 
@@ -441,110 +445,229 @@ Item {
         }
 
     }
-    /*
-                        Item {
-                            anchors.fill: parent
-                            opacity: barRoot.lyricsOpen ? 1 : 0
-                            Behavior on opacity {
-                                NumberAnimation { duration: 200 }
-                            }
-                            Column {
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.leftMargin: 20
-                                anchors.topMargin: 15
-                                spacing: 12
-                                Rectangle {
-                                    width: 85
-                                    height: 20
-                                    color: "transparent"
-                                    RowLayout {
-                                        spacing: 10
-                                        Text {
-                                            Layout.alignment: Qt.AlignVCenter
-                                            text: Icons.lyricsBack
-                                            color: "white"
-                                            font {
-                                                family: root.iconFont
-                                                pixelSize: root.pixelSize
-                                            }
-                                        }
-                                        Text {
-                                            verticalAlignment: Text.AlignVCenter
-                                            horizontalAlignment: Text.AlignHCenter
-                                            text: "Lyrics"
-                                            color: "white"
-                                            font {
-                                                family: root.font
-                                                pixelSize: root.pixelSize
-                                            }
-                                        }
-                                    }
-                                }
-                                Rectangle {
-                                    width: 320
-                                    height: 450
-                                    color: "#11111b"
-                                    radius: 12
+    
+Item {
+    id: lyricsPage
+    anchors.fill: parent
+    opacity: lyricsOpen ? 1 : 0
+    visible: opacity > 0
+    Behavior on opacity { NumberAnimation { duration: 200 } }
 
-                                    property int currentTrackTimeMs: 6000
+    property color fadeColor: "#000000"
+    property color accent: "#ffffff"
 
-                                    onCurrentTrackTimeMsChanged: {
-                                        for (var i = 0; i < lyricsModel.count; i++) {
-                                            if (lyricsModel.get(i).timeMs <= currentTrackTimeMs &&
-                                            (i === lyricsModel.count - 1 || lyricsModel.get(i + 1).timeMs > currentTrackTimeMs)) {
+    readonly property bool canSeek: !!(Island.media && Island.media.canSeek && Lyrics.isSynced)
+    readonly property int active: Lyrics.indexAt(Island.media ? Island.media.position * 1000 : 0)
+    readonly property string trackKey: Island.media
+        ? [Island.media.trackArtist, Island.media.trackTitle, Island.media.trackAlbum].join("|") : ""
 
-                                                if (lyricsList.currentIndex !== i) {
-                                                    lyricsList.currentIndex = i;
-                                                    lyricsList.positionViewAtIndex(i, ListView.Center);
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
+    function requestLyrics() {
+        if (!Island.media) return
+        Lyrics.load(Island.media.trackArtist, Island.media.trackTitle,
+                    Island.media.trackAlbum, Island.media.length)
+    }
+    function seekTo(ms, index) {
+        if (!canSeek) return
+        Island.media.position = ms / 1000
+        resumeTimer.stop()
+        lyricsList.userScrolling = false
+        lyricsList.follow(index)
+    }
 
-                                    ListModel {
-                                        id: lyricsModel
-                                        ListElement { timeMs: 0; text: "Instrumental Intro" }
-                                        ListElement { timeMs: 5000; text: "First line of the song" }
-                                        ListElement { timeMs: 9500; text: "Second line of the song" }
-                                    }
+    onTrackKeyChanged: if (lyricsOpen) requestLyrics()
+    onActiveChanged: if (!lyricsList.userScrolling) lyricsList.follow()
+    onVisibleChanged: if (visible) Qt.callLater(lyricsList.follow)
+    Component.onCompleted: if (lyricsOpen) requestLyrics()
 
-                                    ListView {
-                                        id: lyricsList
-                                        anchors.fill: parent
-                                        anchors.margins: 15
-                                        model: lyricsModel
-                                        clip: true
-                                        focus: true
+    Item {
+        id: header
+        x: 20; y: 14
+        width: parent.width - 40; height: 22
 
-                                        highlightMoveDuration: 300
-                                        highlightMoveVelocity: -1
+        Row {
+            spacing: 8
+            anchors.verticalCenter: parent.verticalCenter
+            Text {
+                text: Icons.lyricsBack
+                color: "white"
+                font.family: root.iconFont
+                font.pixelSize: root.fontSize
+            }
+            Text {
+                text: "Lyrics"
+                color: "white"
+                font.family: root.font
+                font.pixelSize: root.fontSize
+                font.bold: true
+            }
+        }
+        MouseArea { width: 100; height: parent.height; onClicked: lyricsOpen = false }
 
-                                        delegate: Item {
-                                            width: lyricsList.width
-                                            height: lyricText.implicitHeight + 16
+        Text {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: Lyrics.status === "found" ? (Lyrics.isSynced ? "Synced" : "Plain text") : ""
+            color: root.textColorSecondary
+            font.family: root.font
+            font.pixelSize: root.fontSize - 3
+        }
+    }
 
-                                            property bool isCurrent: ListView.isCurrentItem
+    Item {
+        id: area
+        anchors {
+            top: header.bottom; topMargin: 8
+            left: parent.left; right: parent.right; bottom: parent.bottom
+        }
+        clip: true
 
-                                            Text {
-                                                id: lyricText
-                                                width: parent.width
-                                                text: model.text
-                                                font.pointSize: isCurrent ? 16 : 13
-                                                font.bold: isCurrent
-                                                color: isCurrent ? "#f5c2e7" : "#a6adc8"
-                                                wrapMode: Text.WordWrap
-                                                horizontalAlignment: Text.AlignHCenter
+        ListView {
+            id: lyricsList
+            anchors.fill: parent
+            model: Lyrics.lines
+            interactive: false
+            cacheBuffer: 20000
+            topMargin: height / 2
+            bottomMargin: height / 2
+            spacing: 2
 
-                                                Behavior on color { ColorAnimation { duration: 200 } }
-                                                Behavior on font.pointSize { NumberAnimation { duration: 200 } }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                                */
+            property bool userScrolling: false
+
+            function follow(i) {
+                const idx = (i === undefined) ? lyricsPage.active : i
+                if (idx < 0) return
+                const item = itemAtIndex(idx)
+                if (!item) return
+                scrollAnim.stop()
+                scrollAnim.from = contentY
+                scrollAnim.to = item.y + item.height / 2 - height / 2
+                scrollAnim.start()
+            }
+
+            onHeightChanged: if (!userScrolling) Qt.callLater(follow)
+
+            Connections {
+                target: Lyrics
+                function onLinesChanged() {
+                    scrollAnim.stop()
+                    lyricsList.userScrolling = false
+                    lyricsList.contentY = -lyricsList.topMargin
+                    Qt.callLater(lyricsList.follow)
+                }
+            }
+
+            NumberAnimation {
+                id: scrollAnim
+                target: lyricsList
+                property: "contentY"
+                duration: 450
+                easing.type: Easing.OutCubic
+            }
+
+            Timer {
+                id: resumeTimer
+                interval: 1000
+                onTriggered: { lyricsList.userScrolling = false; lyricsList.follow() }
+            }
+
+            delegate: Item {
+                id: row
+                required property int index
+                required property var modelData
+
+                readonly property bool current: Lyrics.isSynced && index === lyricsPage.active
+                readonly property int dist: lyricsPage.active < 0 ? 3 : Math.abs(index - lyricsPage.active)
+
+                width: lyricsList.width
+                height: label.implicitHeight + 20
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8; anchors.rightMargin: 8
+                    radius: 12
+                    color: root.backgroundColor
+                    opacity: ma.containsMouse && ma.enabled ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                }
+
+                Text {
+                    id: label
+                    anchors.centerIn: parent
+                    width: parent.width - 64
+                    text: row.modelData.text || "♪"
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter
+                    font.family: root.font
+                    font.pixelSize: 18
+                    font.bold: true
+                    color: row.current ? lyricsPage.accent : "white"
+                    scale: row.current ? 1.08 : 1
+                    opacity: !Lyrics.isSynced ? 0.85
+                           : row.current ? 1
+                           : Math.max(0.2, 0.5 - (row.dist - 1) * 0.1)
+
+                    Behavior on color   { ColorAnimation  { duration: 250 } }
+                    Behavior on opacity { NumberAnimation { duration: 250 } }
+                    Behavior on scale   { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                }
+
+                MouseArea {
+                    id: ma
+                    anchors.fill: parent
+                    enabled: lyricsPage.canSeek
+                    hoverEnabled: true
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: lyricsPage.seekTo(row.modelData.timeMs, row.index)
+                }
+            }
+        }
+
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => {
+                scrollAnim.stop()
+                lyricsList.userScrolling = true
+                const lo = lyricsList.originY - lyricsList.topMargin
+                const hi = lyricsList.originY + lyricsList.contentHeight
+                           - lyricsList.height + lyricsList.bottomMargin
+                lyricsList.contentY = Math.max(lo, Math.min(hi,
+                    lyricsList.contentY - event.angleDelta.y / 2))
+                resumeTimer.restart()
+            }
+        }
+
+        Rectangle {
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+            height: 36
+            gradient: Gradient {
+                GradientStop { position: 0; color: lyricsPage.fadeColor }
+                GradientStop { position: 1; color: Qt.rgba(lyricsPage.fadeColor.r, lyricsPage.fadeColor.g, lyricsPage.fadeColor.b, 0) }
+            }
+        }
+        Rectangle {
+            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+            height: 36
+            gradient: Gradient {
+                GradientStop { position: 0; color: Qt.rgba(lyricsPage.fadeColor.r, lyricsPage.fadeColor.g, lyricsPage.fadeColor.b, 0) }
+                GradientStop { position: 1; color: lyricsPage.fadeColor }
+            }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: Lyrics.lines.length === 0
+            color: root.textColorSecondary
+            font.family: root.font
+            font.pixelSize: root.fontSize
+            text: ({
+                loading: "Looking for lyrics…",
+                none: "No lyrics found",
+                instrumental: "♪  Instrumental",
+                error: "Couldn't reach lrclib"
+            })[Lyrics.status] ?? ""
+        }
+    }
+}
+                                
 
 }
