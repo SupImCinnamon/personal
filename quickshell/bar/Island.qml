@@ -15,6 +15,7 @@ Singleton {
     property var notification: null
     property var media: null
     property var recording: null
+    property var songrec: null
 
     property var dragDrop: null
     property var dragDropType: null
@@ -36,6 +37,7 @@ Singleton {
     readonly property string activity:
         portal ? "portal" :
         incomingCall ? "incomingCall" :
+        SongrecBridge.state !== "idle" ? "songrec" :
         appLauncher ? "appLauncher" :
         controlCenter ? "controlCenter" :
         dragDrop ? "dragDrop" :
@@ -48,6 +50,7 @@ Singleton {
         const out = []
         if (portal)       out.push("portal")
         if (incomingCall) out.push("incomingCall")
+        if (SongrecBridge.state !== "idle") out.push("songrec")
         if (appLauncher)  out.push("appLauncher")
         if (controlCenter)out.push("controlCenter")
         if (dragDrop)     out.push("dragDrop")
@@ -67,6 +70,7 @@ Singleton {
 
     readonly property var layouts: ({
         portal:       { compact: Qt.size(150, 30), expanded: Qt.size(560, 210) },
+        songrec:      { compact: Qt.size(275, 60), expanded: Qt.size(350, 120) },
         appLauncher:  { compact: Qt.size(150, 30), expanded: Qt.size(640, 440) },
         controlCenter:{ compact: Qt.size(150, 30), expanded: Qt.size(965, 760) },
         notification: { compact: Qt.size(200, 30), expanded: Qt.size(420, 150) },
@@ -188,5 +192,19 @@ Singleton {
         interval: 2000; repeat: true
         running: !portalSock.connected
         onTriggered: portalSock.connected = true
+    }
+
+    Connections {
+        target: SongrecBridge
+        function onStateChanged() {
+            if (SongrecBridge.finished) root.expanded = true
+            else if (SongrecBridge.state === "idle") root.expanded = false
+        }
+    }
+
+    Timer {
+        interval: 5000
+        running: SongrecBridge.finished && !root.hovered
+        onTriggered: SongrecBridge.dismiss()
     }
 }

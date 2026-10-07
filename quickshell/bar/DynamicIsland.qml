@@ -232,7 +232,8 @@ Scope {
                     case "call:expanded":            return callExpanded
                     case "incomingCall:compact":     return incomingCallCompact
                     case "incomingCall:expanded":    return incomingCallExpanded
-
+                    case "songrec:compact":          return songrecCompact
+                    case "songrec:expanded":         return songrecExpanded
                     default:
                         console.warn("viewFor: no view for", activity, kind)
                         return null
@@ -427,6 +428,16 @@ Scope {
                 Component {
                     id: incomingCallExpanded
                     IncomingCallExpanded {}
+                }
+
+                Component {
+                    id: songrecCompact
+                    SongrecCompact {}
+                }
+
+                Component {
+                    id: songrecExpanded
+                    SongrecExpanded {}
                 }
             }
 

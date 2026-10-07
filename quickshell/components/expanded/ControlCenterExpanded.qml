@@ -5,6 +5,7 @@ import Quickshell.Widgets
 import Quickshell.Services.Pipewire
 import qs.utils
 import qs.bar
+import qs.components.bridges
                     
 Rectangle {
     id: controlCenterFrame
@@ -237,11 +238,20 @@ Rectangle {
                         color: root.backgroundColor
                         Text {
                             anchors.centerIn: parent
-                            text: Icons.bellOff
+                            anchors.verticalCenterOffset: 1
+                            anchors.horizontalCenterOffset: -2
+                            text: Icons.music
                             color: root.textColor
                             font {
                                 family: root.iconFont
                                 pixelSize: root.fontSize + 12
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                SongrecBridge.toggle()
+                                Island.expanded = false;
                             }
                         }
                     }

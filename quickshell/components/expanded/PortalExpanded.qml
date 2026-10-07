@@ -4,10 +4,10 @@ import qs.components.expanded.subcomponents
 
 Item {
     readonly property bool isCast: Island.portal?.type === "screencast"
-    readonly property real extraHeight: isCast ? 0 : 230
-    readonly property real extraWidth: isCast ? 0 : 80
+    readonly property real extraHeight: isCast ? 0 : 300
+    readonly property real extraWidth: isCast ? 0 : 300
 
-    PortalChooser {
+    FileChooser {
         anchors.fill: parent
         anchors.margins: 14
         visible: !parent.isCast
